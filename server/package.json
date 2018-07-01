@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "serialport": "^6.2.1"
+    "serialport": "^6.2.1",
+    "sqlite3": "^4.0.1"
   }
 }
