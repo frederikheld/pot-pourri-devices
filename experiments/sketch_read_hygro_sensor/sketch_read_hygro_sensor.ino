@@ -10,10 +10,17 @@
  * it via the 5V pin.
 */
 
+#include <ArduinoJson.h>
+
+// Board Information
+#define DEVICE_ID 0001
+
+// Hygro Sensor
 #define ANALOG_IN A0
 #define DIGITAL_IN 8
 #define SENSOR_VCC_OUT 4
 
+// Variables
 int analog_val;
 int digital_val;
 
@@ -26,34 +33,38 @@ void setup()
   digitalWrite(SENSOR_VCC_OUT, LOW);
 
   // Initialize serial port:
-  Serial.begin(9600);  
-
+  Serial.begin(115200);
+  
   // Take a deep breath:
   delay(1000);
-  Serial.println("Arduino ready");
-  Serial.println("------------------------");
 }
 
 void loop()
 {
+  
+  // Initialize JSON object:
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& jsonObject = jsonBuffer.createObject();
+  
   // Turn on sensor:
   digitalWrite(SENSOR_VCC_OUT, HIGH);
   delay(100);
 
+  // Store meta data:
+  jsonObject["device_id"] = DEVICE_ID;
+
   // Read values:
-  digital_val = digitalRead(DIGITAL_IN);
-  analog_val = analogRead(ANALOG_IN);
+  jsonObject["digital"] = digitalRead(DIGITAL_IN);
+  jsonObject["analog"] = analogRead(ANALOG_IN);
 
   // Turn off sensor:
   digitalWrite(SENSOR_VCC_OUT, LOW);
 
   // Report values:
-  Serial.print("Digital: ");
-  Serial.println(digital_val);
-  Serial.print("Analog:  ");
-  Serial.println(analog_val);
-  Serial.println("------------------------");
+  jsonObject.printTo(Serial);
+  Serial.println();
 
   // Wait for next cycle:
   delay(1000);
+  
 }
