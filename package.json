@@ -1,7 +1,7 @@
 {
-  "name": "auto-pot-pourri",
+  "name": "pot-pourri",
   "version": "1.0.0",
-  "description": "auto-pot-pourri",
+  "description": "pot-pourri",
   "main": "index.js",
   "dependencies": {
     "seneca": "^3.6.0"

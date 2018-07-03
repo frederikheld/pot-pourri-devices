@@ -1,1 +1,1 @@
-auto-pot-pourri
+pot-pourri
