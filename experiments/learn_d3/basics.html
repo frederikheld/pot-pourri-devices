@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Auto Pot-Purri</title>
+    <script src="./js/d3.v5.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+
+    <div id="foo">
+        <h1>You know?</h1>
+        <p>What's up?</p>
+        <p>Know what?</p>
+    </div>
+
+    <script>
+        d3.select("#foo").select("h1").style("background-color", "red")
+        d3.select("#foo").selectAll("p").style("color", "green")
+    </script>
+
+    <svg id="circles" width="400" height="300" style="border: 1px solid">
+            <circle cx="100" cy="70" r="10" fill="red" />
+            <circle cx="200" cy="70" r="20" fill="blue" />
+        </svg>
+
+    <script>
+        var data = [10, 20, 30, 40, 50]
+
+        var circles = d3.select("svg#circles").selectAll("circle").data(data)
+
+        circles.attr("fill", "red")
+
+        circles.exit().remove()
+
+        circles.enter()
+            .append("circle")
+            .merge(circles)
+            .attr("fill", "green")
+    </script>
+
+</body>
+
+</html>
