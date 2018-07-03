@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Auto Pot-Purri</title>
+    <script src="./js/d3.v5.min.js" charset="utf-8"></script>
+
+    <style type="text/css">
+        #chart svg {
+            background: #ccc;
+        }
+
+        #chart .line {
+            fill: none;
+            stroke: blue;
+            stroke-width: 2px;
+        }
+
+        #chart .line:hover {
+            stroke: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="chart"></div>
+
+    <script>
+        // Helpers:
+        var parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S")
+        var formatDate = d3.timeFormat("%Y-%m-%d %H:%M:%S")
+
+        // Provide data:
+        var data_raw = [{
+                "id": "1",
+                "sensor_id": "1",
+                "timestamp": "2018-07-01 21:01:19",
+                "value_analog": "911"
+            },
+            {
+                "id": "2",
+                "sensor_id": "2",
+                "timestamp": "2018-07-01 21:01:23",
+                "value_analog": "220"
+            },
+            {
+                "id": "3",
+                "sensor_id": "2",
+                "timestamp": "2018-07-01 21:02:20",
+                "value_analog": "340"
+            },
+            {
+                "id": "4",
+                "sensor_id": "1",
+                "timestamp": "2018-07-01 21:02:20",
+                "value_analog": "890"
+            },
+            {
+                "id": "5",
+                "sensor_id": "1",
+                "timestamp": "2018-07-01 21:03:22",
+                "value_analog": "810"
+            },
+            {
+                "id": "6",
+                "sensor_id": "2",
+                "timestamp": "2018-07-01 21:03:24",
+                "value_analog": "410"
+            },
+            {
+                "id": "7",
+                "sensor_id": "1",
+                "timestamp": "2018-07-01 21:04:23",
+                "value_analog": "740"
+            },
+            {
+                "id": "8",
+                "sensor_id": "2",
+                "timestamp": "2018-07-01 21:04:31",
+                "value_analog": "480"
+            },
+            {
+                "id": "9",
+                "sensor_id": "2",
+                "timestamp": "2018-07-01 21:05:20",
+                "value_analog": "500"
+            },
+            {
+                "id": "10",
+                "sensor_id": "1",
+                "timestamp": "2018-07-01 21:05:24",
+                "value_analog": "600"
+            }
+        ]
+
+        // Format data:
+        data_raw.forEach(function(d) {
+            d.timestamp = parseDate(d.timestamp)
+        })
+
+        // data is the entry point for the data coming into the chart.
+        // No matter how the source is formatted, data should always be formatted the same for each specific chart.
+        // For this diagram it has to be nested by sensor_id.
+        var data = d3.nest()
+            .key(function(d) {
+                return d.sensor_id
+            })
+            .entries(data_raw)
+
+        // Flatten array (needed to find min, max values across all data points):
+        var dataFlattened = data.map(d => {
+            return d.values
+        }).reduce((accumulator, value) => accumulator.concat(value), [])
+        // This is the same format as data_raw, So why not use data_raw to spare the expensive transformation?
+        // It is just an coincidece, that it is the same. Data could be provided in a totally different format. Therefore all calculations for this chart are based on data, which has a reliable structure.
+
+        // Define dimensions and margin according to conventions:
+        var margin = {
+                top: 20,
+                right: 20,
+                bottom: 30,
+                left: 50
+            },
+            width = 800 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom
+
+        // Define scales:
+        var yScale = d3.scaleLinear()
+            .domain([1023, 0])
+            .range([0, height])
+
+        var xScale = d3.scaleTime()
+            .domain([
+                d3.min(dataFlattened.map(d => d.timestamp)),
+                d3.max(dataFlattened.map(d => d.timestamp))
+
+            ])
+            .range([0, width])
+
+        // Create chart:
+        var chart = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+
+        // Define line:
+        var valueLine = d3.line()
+            .x(function(d) {
+                return xScale(d.timestamp)
+            })
+            .y(function(d) {
+                return yScale(d.value_analog)
+            })
+
+        // Add lines to chart:
+        data.forEach(function(d) {
+            chart.append("path")
+                .attr("class", "line")
+                .attr("d", valueLine(d.values))
+        })
+
+        // Add axes to chart:
+        chart.append("g")
+            .attr("transform", "translate(0, " + height + ")")
+            .call(d3.axisBottom(xScale))
+
+        chart.append("g")
+            .call(d3.axisLeft(yScale))
+    </script>
+
+</body>
+
+</html>
