@@ -13,7 +13,7 @@
 #include <ArduinoJson.h>
 
 // Board Information
-#define DEVICE_ID 0001
+#define SENSOR_ID 0001
 
 // Hygro Sensor
 #define ANALOG_IN A0
@@ -51,11 +51,11 @@ void loop()
   delay(100);
 
   // Store meta data:
-  jsonObject["device_id"] = DEVICE_ID;
+  jsonObject["sensor_id"] = SENSOR_ID;
 
   // Read values:
-  jsonObject["digital"] = digitalRead(DIGITAL_IN);
-  jsonObject["analog"] = analogRead(ANALOG_IN);
+  jsonObject["value_digital"] = digitalRead(DIGITAL_IN);
+  jsonObject["value_analog"] = analogRead(ANALOG_IN);
 
   // Turn off sensor:
   digitalWrite(SENSOR_VCC_OUT, LOW);
