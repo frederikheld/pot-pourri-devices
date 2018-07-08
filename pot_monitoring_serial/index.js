@@ -42,7 +42,7 @@ serialConnection.on('open', () => {
 		console.log(jsonData)
 
 		// Send data to datastore service:
-		client.act('role: datastore, cmd: insert, data: ' + JSON.stringify(jsonData))
+		client.act('role: sensors_datastore, cmd: add_datapoint, data: ' + JSON.stringify(jsonData))
 
 	})
 })
