@@ -42,10 +42,6 @@ void setup()
 void loop()
 {
   
-  // Initialize JSON object:
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& jsonObject = jsonBuffer.createObject();
-  
   // Turn on sensor:
   digitalWrite(SENSOR_VCC_OUT, HIGH);
   delay(100);
@@ -59,6 +55,10 @@ void loop()
 
   // Turn off sensor:
   digitalWrite(SENSOR_VCC_OUT, LOW);
+  
+  // Initialize JSON object:
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& jsonObject = jsonBuffer.createObject();
 
   // Report values:
   jsonObject.printTo(Serial);

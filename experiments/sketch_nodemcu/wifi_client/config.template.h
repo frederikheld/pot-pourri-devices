@@ -7,6 +7,9 @@ const char* wifi_secret = "secret";
 const char* host = "hostname or ip";
 int port = 80;
 
+uint8_t pin_led = D3;
+
+
 // -- OPTIONAL:
 
 int wifi_timeout = 30000; // in milliseconds. Default: 10000

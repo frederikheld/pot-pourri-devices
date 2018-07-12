@@ -1,12 +1,12 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 
+
+// This is a test
+
+// -- configuration
+
 #include "config.h"
-
-
-// -- configuration // should be done via api later
-
-uint8_t pin_led = D0;
 
 
 // -- functions
@@ -32,7 +32,7 @@ String httpPost(const char* host, int port, const char* url, String payload) {
       if (client.available()) {
         char c = client.read();
         response = response + c;
-        Serial.print(c);
+        //Serial.print(c);
         /*response = response + client.readStringUntil('\r\n');
         //Serial.println(response);*/
       
@@ -40,7 +40,7 @@ String httpPost(const char* host, int port, const char* url, String payload) {
     }
     
     client.stop();
-    Serial.println(response);
+    //Serial.println(response);
     return response;
 
   } else {
@@ -84,11 +84,6 @@ int wifiConnect(const char* ssid, const char* secret, int timeout = 10000) {
   return 0;
 }
 
-// timeout in seconds
-void deepSleep(int timeout) {
-  ESP.deepSleep(timeout * 1000000);
-}
-
 
 // -- main
 
@@ -106,8 +101,6 @@ void setup() {
 
   wifiConnect(wifi_ssid, wifi_secret);
   
-  String response = httpPost(host, port, "/", "Hello World!");
-  Serial.println(response);
 }
 
 void loop() {
