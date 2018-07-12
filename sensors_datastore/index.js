@@ -1,5 +1,5 @@
 'use strict'
 
 var seneca = require('seneca')()
-	.use('datastore')
+	.use('seneca_datastore')
 	.listen()
