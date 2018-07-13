@@ -1,5 +1,5 @@
 {
-  "name": "datastore",
+  "name": "seneca_web",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,10 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
+    "connect": "^3.6.6",
     "express": "^4.16.3",
-    "mkdirp": "^0.5.1",
-    "sqlite3": "^4.0.1"
+    "seneca-web": "^2.2.0",
+    "seneca-web-adapter-express": "^1.1.1"
   }
 }
