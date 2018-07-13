@@ -2,7 +2,7 @@
 
 // device:
 #define DEVICE_ID 1 // unique per datastore
-#define SAMPLING_INTERVAL 1 // in seconds
+#define SAMPLING_INTERVAL 60 // in seconds // the time it takes to collect and send the data goes on top!
 
 // wifi:
 #define WIFI_SSID "<wifi ssid>";

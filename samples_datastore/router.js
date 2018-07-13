@@ -12,23 +12,26 @@ router.use(bodyParser.urlencoded({
 }))
 router.use(bodyParser.json())
 
-var actions = require('./actions')
+var Actions = require('./actions')
+var actions = new Actions('./db/data.db')
 
 
 // -- routes
 
 router.post('/samples', (req, res) => {
 
-    return res.status(200).send({
-        msg: "Hello World!"
-    })
-
     actions.addSample(req.body)
-        .then((res) => {
-
+        .then((result) => {
+            // console.log(result)
+            return res.status(201).send({
+                msg: "Sample was successfully stored."
+            })
         })
         .catch((err) => {
-            throw new Error("addSample failed! " + err)
+            return res.status(500).send({
+                err: err,
+                msg: "Sample could not be stored."
+            })
         })
 
 })

@@ -54,7 +54,6 @@ void setup() {
     Serial.print("Connected. Local IP is ");
     Serial.println(WiFi.localIP());
 
-
     // take a deep breath:
     delay(1000);
   
@@ -90,7 +89,7 @@ void loop() {
     // compile sample:
     jsonObject["device_id"] = DEVICE_ID;
     jsonObject["sensor_id"] = SENSOR_HUMIDITY_ID;
-    jsonObject["analog_raw"] = analog_raw;
+    jsonObject["value_raw"] = analog_raw;
 
 
     // -- log to serial:
@@ -125,40 +124,6 @@ void loop() {
         Serial.println("POST failed. HTTP status code " + httpCode);
     }
     http.end();
-
-/* Works, but it's difficult. No payload yet.
-    // connect to client:
-    WiFiClient client;
-    String response = "";
-    if (client.connect(API_HOST, API_PORT)) {
-        Serial.println(String("Connected to ") + API_HOST + ":" + API_PORT + ".");
-
-
-        int content_length = 0;
-        
-        // send request:
-        client.print(String("POST ") + API_ENDPOINT + "samples/ HTTP/1.1\r\n");
-        client.print(String("Host: ") + API_HOST + "\r\n");
-        client.print("Content-Type: application/json\r\n");
-        client.print(String("Content-Length: ") + content_length);
-        client.print("Connection: close\r\n");
-        client.print("\r\n");
-
-        // wait for reply:
-        while (client.connected()) {
-            if (client.available()) {
-                char c = client.read();
-                response = response + c;
-            }
-        }
-        client.stop();
-
-        Serial.println(String("Response: ") + response);
-
-    }
-
-        */
-
 
     // wait for next cycle:
     delay(SAMPLING_INTERVAL * 1000);
