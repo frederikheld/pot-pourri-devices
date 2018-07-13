@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "pot-pourri",
   "main": "index.js",
-  "dependencies": {
-    "seneca": "^3.6.0"
-  },
+  "dependencies": {},
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "MIT"
 }

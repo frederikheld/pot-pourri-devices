@@ -13,22 +13,19 @@
 #include <ArduinoJson.h>
 
 // Board Information
-#define DEVICE_ID 0001
+#define DEVICE_ID 1 // unique per datastore
+#define SAMPLING_INTERVAL 30 // in seconds
 
 // Hygro Sensor
 #define ANALOG_IN A0
-#define DIGITAL_IN 8
 #define SENSOR_VCC_OUT 4
+#define SENSOR_ID 1 // unique per device
 
-// Variables
-int analog_val;
-int digital_val;
 
 void setup()
 {
   // Initialize hygro sensor:
   pinMode(ANALOG_IN, INPUT);
-  pinMode(DIGITAL_IN, INPUT);
   pinMode(SENSOR_VCC_OUT, OUTPUT);
   digitalWrite(SENSOR_VCC_OUT, LOW);
 
@@ -46,25 +43,25 @@ void loop()
   digitalWrite(SENSOR_VCC_OUT, HIGH);
   delay(100);
 
+  // Initialize JSON object:
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& jsonObject = jsonBuffer.createObject();
+
   // Store meta data:
   jsonObject["device_id"] = DEVICE_ID;
 
   // Read values:
-  jsonObject["digital"] = digitalRead(DIGITAL_IN);
-  jsonObject["analog"] = analogRead(ANALOG_IN);
+  jsonObject["value_raw"] = analogRead(ANALOG_IN);
+  jsonObject["sensor_id"] = SENSOR_ID;
 
   // Turn off sensor:
   digitalWrite(SENSOR_VCC_OUT, LOW);
-  
-  // Initialize JSON object:
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& jsonObject = jsonBuffer.createObject();
 
   // Report values:
   jsonObject.printTo(Serial);
   Serial.println();
 
   // Wait for next cycle:
-  delay(1000);
+  delay(SAMPLING_INTERVAL * 1000);
   
 }
