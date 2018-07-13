@@ -36,4 +36,23 @@ router.post('/samples', (req, res) => {
 
 })
 
+router.get('/samples', (req, res) => {
+
+    console.log(req.query)
+
+    actions.getSamples(req.query.timestampStart, req.query.timestampEnd)
+        .then((result) => {
+            return res.status(200).send({
+                msg: "Samples successfully queried.",
+                data: result
+            })
+        })
+        .catch((err) => {
+            return res.status(500).send({
+                msg: "Samples could not be queried.",
+                err: err
+            })
+        })
+})
+
 module.exports = router

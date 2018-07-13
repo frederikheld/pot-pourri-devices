@@ -101,9 +101,9 @@ function Actions(dbPath) {
             (err) => {
                 promiseInitDB = new Promise((resolve, reject) => {
                     if (err) {
-                        reject(err)
+                        return reject(err)
                     } else {
-                        resolve()
+                        return resolve()
                     }
                 })
             })
@@ -115,15 +115,61 @@ function Actions(dbPath) {
         this.db.run(query, [], (err) => {
             promiseRunQuery = new Promise(function (resolve, reject) {
                 if (err) {
-                    reject(err)
+                    return reject(err)
                 } else {
-                    console.log(query)
-                    resolve(query)
+                    return resolve(query)
                 }
             })
         })
 
         return Promise.all([promiseInitDB, promiseRunQuery])
+
+    }
+
+
+    /*
+     * Query samples in the interval between intervalStart and intervalEnd
+     * 
+     * intervalStart: ISO formatted timestamp
+     * intervalEnd: ISO formatted timestamp
+     */
+
+    this.getSamples = function (intervalStart, intervalEnd) {
+
+        var promiseInitDB
+        var promiseRunQuery
+
+        return new Promise((resolve, reject) => {
+
+            // create db object
+            this.db = new sqlite3.Database(
+                dbPath, [],
+                (err) => {
+                    if (err) {
+                        return reject(err)
+                    }
+                })
+
+            // create query
+            var query = `SELECT *
+                    FROM samples
+                    WHERE timestamp
+                        BETWEEN ?
+                        AND ?
+                    ORDER BY timestamp
+                        ASC`
+
+            // run query
+            this.db.all(query, [intervalStart, intervalEnd],
+                function (err, rows) {
+                    if (err) {
+                        return reject(err)
+                    } else {
+                        return resolve(rows)
+                    }
+                })
+
+        })
 
     }
 
