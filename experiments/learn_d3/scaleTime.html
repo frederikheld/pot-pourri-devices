@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Auto Pot-Purri</title>
+    <script src="./js/d3.v5.min.js" charset="utf-8"></script>
+
+    <style type="text/css">
+        #chart svg {
+            background: #ccc;
+        }
+
+        #chart .line {
+            fill: none;
+            stroke: blue;
+            stroke-width: 2px;
+        }
+
+        #chart .line:hover {
+            stroke: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="chart"></div>
+
+    <script>
+        // Provide data:
+        var data = [{
+                sensor_id: 1,
+                value_raw: 1023,
+                timestamp: "2018-07-13T19:29:57.515Z"
+            },
+            {
+                sensor_id: 2,
+                value_raw: 10,
+                timestamp: "2018-07-13T19:30:20.556Z"
+            },
+            {
+                sensor_id: 1,
+                value_raw: 1006,
+                timestamp: "2018-07-13T19:30:50.534Z"
+            },
+            {
+                sensor_id: 1,
+                value_raw: 940,
+                timestamp: "2018-07-13T19:31:48.521Z"
+            },
+            {
+                sensor_id: 2,
+                value_raw: 190,
+                timestamp: "2018-07-13T19:32:01.256Z"
+            },
+            {
+                sensor_id: 2,
+                value_raw: 300,
+                timestamp: "2018-07-13T19:32:20.556Z"
+            },
+            {
+                sensor_id: 1,
+                value_raw: 760,
+                timestamp: "2018-07-13T19:32:36.126Z"
+            },
+            {
+                sensor_id: 1,
+                value_raw: 880,
+                timestamp: "2018-07-13T19:33:32.124Z"
+            },
+            {
+                sensor_id: 2,
+                value_raw: 350,
+                timestamp: "2018-07-13T19:33:10.456Z"
+            },
+            {
+                sensor_id: 2,
+                value_raw: 220,
+                timestamp: "2018-07-13T19:33:23.856Z"
+            },
+            {
+                sensor_id: 1,
+                value_raw: 1000,
+                timestamp: "2018-07-13T19:33:35.734Z"
+            }
+        ]
+
+        // parse date
+        data.forEach(function (d) {
+            d.timestamp = d3.isoParse(d.timestamp)
+        })
+
+        console.log(data)
+
+        // get min and max dates for x-axis
+        var maxDate = d3.max(data.filter(function (d) {
+            return d.timestamp
+        }), function (e) {
+            return e.timestamp
+        })
+
+        var minDate = d3.min(data.filter(function (d) {
+            return d.timestamp
+        }), function (e) {
+            return e.timestamp
+        })
+
+        console.log("Date range: [" + minDate + ", " + maxDate + "]")
+
+        // re-arrange data to create one line per sensor
+        var dataset = d3.nest()
+            .key(function (d) {
+                return d.sensor_id
+            })
+            .entries(data)
+
+        // Define dimensions and margin according to conventions:
+        var margin = {
+                top: 20,
+                right: 20,
+                bottom: 30,
+                left: 50
+            },
+            width = 600 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom
+
+        // Define y-scale as linear:
+        var yScale = d3.scaleLinear()
+            .domain([1023, 0])
+            .range([0, height])
+
+        // Define x-scale as time:
+        var xScale = d3.scaleTime()
+            .domain([minDate, maxDate])
+            .range([0, width])
+
+        // Define lines:
+        var dataLine = d3.line()
+            .x(function (d) {
+                return xScale(d.timestamp)
+            })
+            .y(function (d) {
+                return yScale(d.value_raw)
+            })
+
+        // Create chart:
+        var chart = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+
+        // Add lines to chart:
+        dataset.forEach(function (d) {
+            chart.append("path")
+                .attr("class", "line")
+                .attr("d", dataLine(d.values))
+        })
+
+        // Add axes to chart:
+        chart.append("g")
+            .attr("transform", "translate(0, " + height + ")")
+            .call(d3.axisBottom(xScale))
+
+        chart.append("g")
+            .call(d3.axisLeft(yScale))
+    </script>
+
+</body>
+
+</html>

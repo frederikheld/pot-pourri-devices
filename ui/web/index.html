@@ -28,127 +28,123 @@
     <div id="chart"></div>
 
     <script>
-        // Provide data:
-        var dummyData = [{
-                sensor_id: 1,
-                value_analog: 1023,
-                timestamp: 1
-            },
-            {
-                sensor_id: 2,
-                value_analog: 10,
-                timestamp: 2
-            },
-            {
-                sensor_id: 1,
-                value_analog: 1006,
-                timestamp: 3
-            },
-            {
-                sensor_id: 1,
-                value_analog: 940,
-                timestamp: 4
-            },
-            {
-                sensor_id: 2,
-                value_analog: 190,
-                timestamp: 5
-            },
-            {
-                sensor_id: 2,
-                value_analog: 300,
-                timestamp: 7
-            },
-            {
-                sensor_id: 1,
-                value_analog: 760,
-                timestamp: 8
-            },
-            {
-                sensor_id: 1,
-                value_analog: 880,
-                timestamp: 9
-            },
-            {
-                sensor_id: 2,
-                value_analog: 350,
-                timestamp: 12
-            },
-            {
-                sensor_id: 2,
-                value_analog: 220,
-                timestamp: 13
-            },
-            {
-                sensor_id: 1,
-                value_analog: 1000,
-                timestamp: 15
+        function httpGetAsync(url, callback) {
+            var xmlHttp = new XMLHttpRequest()
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    callback(xmlHttp.responseText)
+                }
             }
-        ]
+            xmlHttp.open("GET", url, true) // true for async
+            xmlHttp.send(null)
+        }
+        // Source: https://stackoverflow.com/questions/247483/http-get-request-in-javascript
 
-        // Format data:
-        var dummyDataBySensor = d3.nest()
-            .key(function(d) {
-                return d.sensor_id
+        function getSamplesAsync(startTime, endTime, callback) {
+            var url =
+                "http://localhost:3000/api/v1/samples?timestampStart=" + startTime + "&timestampEnd=2" + endTime
+
+            httpGetAsync(url, function (result) {
+                callback(JSON.parse(result).data)
             })
-            .entries(dummyData)
+        }
+    </script>
 
-        console.log(dummyDataBySensor);
+    <script>
+        var date = new Date()
+        var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
+        // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 12 // 12 h
+        var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds).toISOString()
+        var endTime = new Date(date.getTime()).toISOString()
 
-        // Choose which dataset to use:
-        var dataset = dummyDataBySensor
-        // var dataset = dummyData
+        getSamplesAsync(startTime, endTime, function (data) {
 
-        // Define dimensions and margin according to conventions:
-        var margin = {
-                top: 20,
-                right: 20,
-                bottom: 30,
-                left: 50
-            },
-            width = 400 - margin.left - margin.right,
-            height = 300 - margin.top - margin.bottom
-
-        // Define scales:
-        var yScale = d3.scaleLinear()
-            .domain([1023, 0])
-            .range([0, height])
-
-        var xScale = d3.scaleLinear()
-            .domain([0, 15])
-            .range([0, width])
-
-        // Create chart:
-        var chart = d3.select("#chart")
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
-
-        // Define line:
-        var valueLine = d3.line()
-            .x(function(d) {
-                return xScale(d.timestamp)
-            })
-            .y(function(d) {
-                return yScale(d.value_analog)
+            // parse timestamps
+            data.forEach(function (d) {
+                d.timestamp = d3.isoParse(d.timestamp)
             })
 
-        // Add lines to chart:
-        dataset.forEach(function(d) {
-            chart.append("path")
-                .attr("class", "line")
-                .attr("d", valueLine(d.values))
+            // // get min and max dates as limits for x-axis
+            // var maxDate = d3.max(data.filter(function (d) {
+            //     return d.timestamp
+            // }), function (e) {
+            //     return e.timestamp
+            // })
+
+            // var minDate = d3.min(data.filter(function (d) {
+            //     return d.timestamp
+            // }), function (e) {
+            //     return e.timestamp
+            // })
+            // console.log("time interval: [" + minDate + ", " + maxDate + "]")
+
+            // Using the queried interval makes a more stable time scale
+            // but could leave gaps at the beginning and the end of each line
+            var minDate = d3.isoParse(startTime)
+            var maxDate = d3.isoParse(endTime)
+
+            console.log("time interval: [" + minDate + ", " + maxDate + "]")
+
+            // re-arrange data to create one line per sensor
+            var data = d3.nest()
+                .key(function (d) {
+                    return d.device_id
+                })
+                .entries(data)
+
+            // Define dimensions and margin according to conventions:
+            var margin = {
+                    top: 20,
+                    right: 20,
+                    bottom: 30,
+                    left: 50
+                },
+                width = 600 - margin.left - margin.right,
+                height = 300 - margin.top - margin.bottom
+
+            // Define y-scale as linear:
+            var yScale = d3.scaleLinear()
+                .domain([1023, 0])
+                .range([0, height])
+
+            // Define x-scale as time:
+            var xScale = d3.scaleTime()
+                .domain([minDate, maxDate])
+                .range([0, width])
+
+            // Define lines:
+            var dataLine = d3.line()
+                .x(function (d) {
+                    return xScale(d.timestamp)
+                })
+                .y(function (d) {
+                    return yScale(d.value_raw)
+                })
+
+            // Create chart:
+            var chart = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+
+            // Add lines to chart:
+            data.forEach(function (d) {
+                chart.append("path")
+                    .attr("class", "line")
+                    .attr("d", dataLine(d.values))
+            })
+
+            // Add axes to chart:
+            chart.append("g")
+                .attr("transform", "translate(0, " + height + ")")
+                .call(d3.axisBottom(xScale))
+
+            chart.append("g")
+                .call(d3.axisLeft(yScale))
+
         })
-
-        // Add axes to chart:
-        chart.append("g")
-            .attr("transform", "translate(0, " + height + ")")
-            .call(d3.axisBottom(xScale))
-
-        chart.append("g")
-            .call(d3.axisLeft(yScale))
     </script>
 
 </body>
