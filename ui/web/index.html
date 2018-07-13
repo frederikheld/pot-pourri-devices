@@ -7,8 +7,27 @@
     <script src="./js/d3.v5.min.js" charset="utf-8"></script>
 
     <style type="text/css">
+        #chart .svg-container {
+            display: inline-block;
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%;
+            /* aspect ratio */
+            vertical-align: top;
+            overflow: hidden;
+        }
+
+        #chart .svg-content-responsive {
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
         #chart svg {
             background: #ccc;
+            width: 100%;
+            height: auto;
         }
 
         #chart .line {
@@ -52,16 +71,21 @@
 
     <script>
         var date = new Date()
-        var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
+        // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
         // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 12 // 12 h
+        var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 6 // 6 h
         var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds).toISOString()
         var endTime = new Date(date.getTime()).toISOString()
 
         getSamplesAsync(startTime, endTime, function (data) {
 
-            // parse timestamps
+            // re-format data
             data.forEach(function (d) {
+                // parse timestamps
                 d.timestamp = d3.isoParse(d.timestamp)
+
+                // calculate value as percentage of the raw value:
+                d.value_percent = (1023 - d.value_raw) * (1 / 1023)
             })
 
             // // get min and max dates as limits for x-axis
@@ -93,18 +117,27 @@
                 .entries(data)
 
             // Define dimensions and margin according to conventions:
+            var canvasWidth = document.getElementById("chart").clientWidth
+            var canvasHeight = canvasWidth * 2 / 3
+            console.log(canvasWidth, canvasHeight)
+
             var margin = {
                     top: 20,
                     right: 20,
                     bottom: 30,
                     left: 50
                 },
-                width = 600 - margin.left - margin.right,
-                height = 300 - margin.top - margin.bottom
+                width = canvasWidth - margin.left - margin.right,
+                height = canvasHeight - margin.top - margin.bottom
 
-            // Define y-scale as linear:
+            // Define y-scale as linear (for raw values):
+            // var yScale = d3.scaleLinear()
+            //     .domain([1023, 0])
+            //     .range([0, height])
+
+            // Define y-scale as linear (for percentage values):
             var yScale = d3.scaleLinear()
-                .domain([1023, 0])
+                .domain([1, 0])
                 .range([0, height])
 
             // Define x-scale as time:
@@ -117,15 +150,26 @@
                 .x(function (d) {
                     return xScale(d.timestamp)
                 })
+                // for raw value
+                // .y(function (d) {
+                //     return yScale(d.value_raw)
+                // })
+                // for percentage value
                 .y(function (d) {
-                    return yScale(d.value_raw)
+                    return yScale(d.value_percent)
                 })
 
             // Create chart:
             var chart = d3.select("#chart")
+                .append("div")
+                .classed("svg-container", true)
                 .append("svg")
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .classed("svg-content-responsive", true)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
 
@@ -139,10 +183,18 @@
             // Add axes to chart:
             chart.append("g")
                 .attr("transform", "translate(0, " + height + ")")
-                .call(d3.axisBottom(xScale))
+                .call(
+                    d3.axisBottom(xScale)
+                    .tickFormat(d3.timeFormat("%H:%M"))
+                )
 
             chart.append("g")
-                .call(d3.axisLeft(yScale))
+                .call(
+                    d3.axisLeft(yScale)
+                    .ticks(10)
+                    .tickFormat(d3.format(".0%"))
+                )
+
 
         })
     </script>
