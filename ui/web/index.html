@@ -7,37 +7,49 @@
     <script src="./js/d3.v5.min.js" charset="utf-8"></script>
 
     <style type="text/css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+
         #chart .svg-container {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%;
-            /* aspect ratio */
-            vertical-align: top;
-            overflow: hidden;
-        }
-
-        #chart .svg-content-responsive {
-            display: inline-block;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        #chart svg {
-            background: #ccc;
             width: 100%;
             height: auto;
         }
 
+        #chart svg {
+            background: #fff;
+            width: 100%;
+            height: auto;
+        }
+
+        #chart .axis {
+            font-size: inherit;
+        }
+
         #chart .line {
             fill: none;
-            stroke: blue;
-            stroke-width: 2px;
+            stroke-width: 1px;
         }
 
         #chart .line:hover {
-            stroke: red;
+            stroke-width: 4px;
+        }
+
+        #chart .label {
+            text-anchor: start;
+            dominant-baseline: middle;
+            font-size: inherit;
+            font-family: inherit;
+            margin-top: 4px;
+        }
+
+        .chart-legend {
+            width: calc(100% - 100px);
+            box-sizing: border-box;
+            border: 1px solid black;
+            padding: 10px;
+            margin: 20px 50px;
         }
     </style>
 </head>
@@ -70,134 +82,140 @@
     </script>
 
     <script>
-        var date = new Date()
-        // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
-        // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 12 // 12 h
-        var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 6 // 6 h
-        var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds).toISOString()
-        var endTime = new Date(date.getTime()).toISOString()
+        // Define dimensions and margin according to d3 conventions:
+        var canvasWidth = document.getElementById("chart").clientWidth
+        var canvasHeight = canvasWidth * 2 / 3
+        console.log(canvasWidth, canvasHeight)
 
-        getSamplesAsync(startTime, endTime, function (data) {
+        var margin = {
+                top: 20,
+                right: 50,
+                bottom: 30,
+                left: 50
+            },
+            width = canvasWidth - margin.left - margin.right,
+            height = canvasHeight - margin.top - margin.bottom
 
-            // re-format data
-            data.forEach(function (d) {
-                // parse timestamps
-                d.timestamp = d3.isoParse(d.timestamp)
+        // Create chart:
+        var chart = d3.select("#chart")
+            .append("div")
+            .classed("svg-container", true)
+            .append("svg")
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .classed("svg-content-responsive", true)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
 
-                // calculate value as percentage of the raw value:
-                d.value_percent = (1023 - d.value_raw) * (1 / 1023)
+
+        function updateGraph(chart) {
+
+            var date = new Date()
+            var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 48 // 48 h
+            // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
+            // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 12 // 12 h
+            // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 6 // 6 h
+            // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 1 // 6 h
+            var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds).toISOString()
+            var endTime = new Date(date.getTime()).toISOString()
+
+            getSamplesAsync(startTime, endTime, function (data) {
+
+                // re-format data points
+                for (var i = 0; i < data.length; i++) {
+                    data[i].timestamp = d3.isoParse(data[i].timestamp)
+                    data[i].value_percent = (1024 - data[i].value_raw) * (1 / 1024)
+                }
+
+                // Using the queried interval makes a more stable time scale
+                // but could leave gaps at the beginning and the end of each line
+                var minDate = d3.isoParse(startTime)
+                var maxDate = d3.isoParse(endTime)
+
+                // console.log("time interval: [" + minDate + ", " + maxDate + "]")
+
+                // re-arrange data to create one line per sensor
+                var data = d3.nest()
+                    .key(function (d) {
+                        return d.device_id
+                    })
+                    .entries(data)
+
+
+                // add attributes to each dataset
+                for (var i = 0; i < data.length; i++) {
+                    data[i].color = d3.schemeSet1[i]
+                }
+
+                // Define y-scale as linear (for percentage values):
+                var yScale = d3.scaleLinear()
+                    .domain([1, 0])
+                    .range([0, height])
+
+                // Define x-scale as time:
+                var xScale = d3.scaleTime()
+                    .domain([minDate, maxDate])
+                    .range([0, width])
+
+                // Define lines:
+                var dataLine = d3.line()
+                    .x(function (d) {
+                        return xScale(d.timestamp)
+                    })
+                    .y(function (d) {
+                        return yScale(d.value_percent)
+                    })
+
+                // Add lines to chart:
+                data.forEach(function (d) {
+
+                    // path
+                    chart.append("path")
+                        .attr("d", dataLine(d.values))
+                        .attr("stroke", d.color)
+                        .classed("line", true)
+
+                    // label
+                    chart.append("text")
+                        .attr("transform", "translate(" + (width + 5) + ", " + yScale(d.values[
+                            d.values
+                            .length -
+                            1].value_percent) + ")")
+                        .attr("fill", d.color)
+                        .text(d.values[0].device_id + "." + d.values[0].sensor_id)
+                        .classed("label", true)
+                })
+
+                // Add axes to chart:
+                chart.append("g")
+                    .attr("transform", "translate(0, " + height + ")")
+                    .call(
+                        d3.axisBottom(xScale)
+                        .tickFormat(d3.timeFormat("%H:%M"))
+                    )
+                    .classed("axis axis-x axis-percentage", true)
+
+                chart.append("g")
+                    .call(
+                        d3.axisLeft(yScale)
+                        .ticks(10)
+                        .tickFormat(d3.format(".0%"))
+                    )
+                    .classed("axis axis-y axis-time", true)
+
             })
+        }
 
-            // // get min and max dates as limits for x-axis
-            // var maxDate = d3.max(data.filter(function (d) {
-            //     return d.timestamp
-            // }), function (e) {
-            //     return e.timestamp
-            // })
-
-            // var minDate = d3.min(data.filter(function (d) {
-            //     return d.timestamp
-            // }), function (e) {
-            //     return e.timestamp
-            // })
-            // console.log("time interval: [" + minDate + ", " + maxDate + "]")
-
-            // Using the queried interval makes a more stable time scale
-            // but could leave gaps at the beginning and the end of each line
-            var minDate = d3.isoParse(startTime)
-            var maxDate = d3.isoParse(endTime)
-
-            console.log("time interval: [" + minDate + ", " + maxDate + "]")
-
-            // re-arrange data to create one line per sensor
-            var data = d3.nest()
-                .key(function (d) {
-                    return d.device_id
-                })
-                .entries(data)
-
-            // Define dimensions and margin according to conventions:
-            var canvasWidth = document.getElementById("chart").clientWidth
-            var canvasHeight = canvasWidth * 2 / 3
-            console.log(canvasWidth, canvasHeight)
-
-            var margin = {
-                    top: 20,
-                    right: 20,
-                    bottom: 30,
-                    left: 50
-                },
-                width = canvasWidth - margin.left - margin.right,
-                height = canvasHeight - margin.top - margin.bottom
-
-            // Define y-scale as linear (for raw values):
-            // var yScale = d3.scaleLinear()
-            //     .domain([1023, 0])
-            //     .range([0, height])
-
-            // Define y-scale as linear (for percentage values):
-            var yScale = d3.scaleLinear()
-                .domain([1, 0])
-                .range([0, height])
-
-            // Define x-scale as time:
-            var xScale = d3.scaleTime()
-                .domain([minDate, maxDate])
-                .range([0, width])
-
-            // Define lines:
-            var dataLine = d3.line()
-                .x(function (d) {
-                    return xScale(d.timestamp)
-                })
-                // for raw value
-                // .y(function (d) {
-                //     return yScale(d.value_raw)
-                // })
-                // for percentage value
-                .y(function (d) {
-                    return yScale(d.value_percent)
-                })
-
-            // Create chart:
-            var chart = d3.select("#chart")
-                .append("div")
-                .classed("svg-container", true)
-                .append("svg")
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .attr("xmlns", "http://www.w3.org/2000/svg")
-                .classed("svg-content-responsive", true)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
-
-            // Add lines to chart:
-            data.forEach(function (d) {
-                chart.append("path")
-                    .attr("class", "line")
-                    .attr("d", dataLine(d.values))
-            })
-
-            // Add axes to chart:
-            chart.append("g")
-                .attr("transform", "translate(0, " + height + ")")
-                .call(
-                    d3.axisBottom(xScale)
-                    .tickFormat(d3.timeFormat("%H:%M"))
-                )
-
-            chart.append("g")
-                .call(
-                    d3.axisLeft(yScale)
-                    .ticks(10)
-                    .tickFormat(d3.format(".0%"))
-                )
-
-
-        })
+        setInterval(updateGraph(chart), 1000)
     </script>
+
+    <div class="chart-legend">
+        Labels represent
+        <em>device_id.sensor_id</em>
+    </div>
 
 </body>
 
