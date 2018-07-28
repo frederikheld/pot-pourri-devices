@@ -96,6 +96,8 @@ function Actions(dbPath) {
             sample.timestamp = new Date().toISOString()
         }
 
+        process.stdout.write("POST /samples: " + JSON.stringify(sample)) // TODO: Should be done in index.js and returned via resolve. It didn't work this way though :-P
+
         this.db = new sqlite3.Database(
             dbPath, [],
             (err) => {
@@ -108,15 +110,15 @@ function Actions(dbPath) {
                 })
             })
 
-        var query = `INSERT INTO samples(device_id, sensor_id, value_raw, timestamp) VALUES(` +
-            sample.device_id + `, ` + sample.sensor_id + `, ` + sample.value_raw + `, "` + sample.timestamp +
-            `")`
+        var query = `INSERT INTO samples(device_id, sensor_id, value_raw, timestamp) VALUES(?, ?, ?, ?)`
 
-        this.db.run(query, [], (err) => {
+        this.db.run(query, [sample.device_id, sample.sensor_id, sample.value_raw, sample.timestamp], (err) => {
             promiseRunQuery = new Promise(function (resolve, reject) {
                 if (err) {
+                    console.log(" failed")
                     return reject(err)
                 } else {
+                    console.log(" successful")
                     return resolve(query)
                 }
             })
@@ -138,6 +140,8 @@ function Actions(dbPath) {
 
         var promiseInitDB
         var promiseRunQuery
+
+        process.stdout.write("GET  /samples: " + intervalStart + ' -> ' + intervalEnd)
 
         return new Promise((resolve, reject) => {
 
@@ -163,8 +167,10 @@ function Actions(dbPath) {
             this.db.all(query, [intervalStart, intervalEnd],
                 function (err, rows) {
                     if (err) {
+                        console.log(" failed")
                         return reject(err)
                     } else {
+                        console.log(" successful")
                         return resolve(rows)
                     }
                 })

@@ -38,8 +38,6 @@ router.post('/samples', (req, res) => {
 
 router.get('/samples', (req, res) => {
 
-    console.log(req.query)
-
     actions.getSamples(req.query.timestampStart, req.query.timestampEnd)
         .then((result) => {
             return res.status(200).send({
