@@ -12,11 +12,6 @@
             font-size: 14px;
         }
 
-        #chart .svg-container {
-            width: 100%;
-            height: auto;
-        }
-
         #chart svg {
             background: #fff;
             width: 100%;
@@ -42,6 +37,18 @@
             font-size: inherit;
             font-family: inherit;
             margin-top: 4px;
+        }
+
+        #chart .midnight-line line {
+            stroke: grey;
+        }
+
+        #chart .midnight-line text {
+            fill: grey;
+            text-anchor: start;
+            dominant-baseline: hanging;
+            font-size: inherit;
+            font-family: inherit;
         }
 
         .chart-legend {
@@ -85,7 +92,7 @@
         // Define dimensions and margin according to d3 conventions:
         var canvasWidth = document.getElementById("chart").clientWidth
         var canvasHeight = canvasWidth * 2 / 3
-        console.log(canvasWidth, canvasHeight)
+        // console.log(canvasWidth, canvasHeight)
 
         var margin = {
                 top: 20,
@@ -96,33 +103,47 @@
             width = canvasWidth - margin.left - margin.right,
             height = canvasHeight - margin.top - margin.bottom
 
-        // Create chart:
-        var chart = d3.select("#chart")
-            .append("div")
-            .classed("svg-container", true)
-            .append("svg")
-            .attr("preserveAspectRatio", "xMinYMin meet")
-            .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .attr("xmlns", "http://www.w3.org/2000/svg")
-            .classed("svg-content-responsive", true)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+        function createChart(canvasWidth, canvasHeight, margin = {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0
+        }) {
+
+            var width = canvasWidth - margin.left - margin.right
+            var height = canvasHeight - margin.top - margin.bottom
+
+            var chart = d3.select("#chart")
+                .append("svg")
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("viewBox", "0 0 " + canvasWidth + " " + canvasHeight)
+                .attr("width", canvasWidth)
+                .attr("height", canvasHeight)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .append("g")
+                .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
 
 
-        function updateGraph(chart) {
+
+            return chart
+
+        }
+
+
+        function updateChart(chart) {
 
             var date = new Date()
-            var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 48 // 48 h
+            var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 72 // 72 h
+            // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 48 // 48 h
             // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 24 // 24 h
             // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 12 // 12 h
             // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 6 // 6 h
             // var datapoints_interval_in_microseconds = 1000 * 60 * 60 * 1 // 6 h
-            var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds).toISOString()
-            var endTime = new Date(date.getTime()).toISOString()
+            var startTime = new Date(date.getTime() - datapoints_interval_in_microseconds)
+            var endTime = new Date(date.getTime())
 
-            getSamplesAsync(startTime, endTime, function (data) {
+
+            getSamplesAsync(startTime.toISOString(), endTime.toISOString(), function (data) {
 
                 // re-format data points
                 for (var i = 0; i < data.length; i++) {
@@ -160,7 +181,25 @@
                     .domain([minDate, maxDate])
                     .range([0, width])
 
-                // Define lines:
+
+                // Define lines that indicate midnight:
+                var midnights = getMidnightsInInterval(startTime, endTime)
+
+                midnights.forEach((timestamp) => {
+                    var group = chart.append("g")
+                        .classed("midnight-line", true)
+                    group.append("line")
+                        .attr("x1", xScale(timestamp))
+                        .attr("y1", height)
+                        .attr("x2", xScale(timestamp))
+                        .attr("y2", 0)
+                    group.append("text")
+                        .text(timestamp.toLocaleDateString())
+                        .attr("x", xScale(timestamp) + 4)
+                        .attr("y", 0)
+                })
+
+                // Define data lines:
                 var dataLine = d3.line()
                     .x(function (d) {
                         return xScale(d.timestamp)
@@ -209,7 +248,41 @@
             })
         }
 
-        setInterval(updateGraph(chart), 1000)
+
+        /**
+         * Returns an array of timestamps of all midnights between
+         * startTime and endTime.
+         */
+        function getMidnightsInInterval(startTime, endTime) {
+
+            var time = startTime
+            var midnights = new Array()
+            while (true) {
+
+                time = new Date(
+                    time.getFullYear(),
+                    time.getMonth(),
+                    time.getDate() + 1
+                )
+
+                if (time < endTime) {
+                    midnights.push(time)
+                } else {
+                    break
+                }
+
+            }
+
+            return midnights
+
+        }
+
+
+        // -- MAIN
+
+        var chart = createChart(canvasWidth, canvasHeight, margin)
+        updateChart(chart)
+        // setInterval(updateChart, 1000, chart)
     </script>
 
     <div class="chart-legend">
