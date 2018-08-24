@@ -18,18 +18,16 @@ int analog_val;
 
 void setup() {
 
+    // -- SETUP
+
     // heartbeat led:
     pinMode(HEARTBEAT_PIN, OUTPUT);
     digitalWrite(HEARTBEAT_PIN, LOW);
 
-    // heatbeat led:
-    pinMode(HEARTBEAT_PIN, OUTPUT);
-    digitalWrite(HEARTBEAT_PIN, LOW);
-
     // humidity sensor:
-    pinMode(SENSOR_HUMIDITY_ANALOG_IN, INPUT);
     pinMode(SENSOR_HUMIDITY_VCC_OUT, OUTPUT);
     digitalWrite(SENSOR_HUMIDITY_VCC_OUT, LOW);
+    pinMode(SENSOR_HUMIDITY_ANALOG_IN, INPUT);
 
     // init serial:
     Serial.begin(9600);
@@ -56,10 +54,9 @@ void setup() {
 
     // take a deep breath:
     delay(1000);
-  
-}
 
-void loop() {
+
+    // -- LOOP
 
     // heartbeat:
     digitalWrite(HEARTBEAT_PIN, HIGH);
@@ -125,19 +122,44 @@ void loop() {
     }
     http.end();
 
-    // wait for next cycle:
-    delay(SAMPLING_INTERVAL * 1000);
+    sleepSeconds(SAMPLING_INTERVAL);
+  
+}
 
+void loop() {
+    // To enable deep sleep the loop has to be empty.
 }
 
 
 // -- functions
 
+void sleepSeconds(int time_in_seconds) {
+
+    // turn all outputs off:
+    digitalWrite(HEARTBEAT_PIN, LOW);
+    digitalWrite(SENSOR_HUMIDITY_VCC_OUT, LOW);
+
+    // no deep sleep:
+    // delay(time_in_seconds * 1000);
+
+    // with bridge between RST and D0
+    ESP.deepSleep(time_in_seconds * 1000 * 1000); // time in microseconds!
+
+    // without bridge between RST and D0
+    // esp_sleep_enable_timer_wakeup(BLINK_INTERVAL * 1000 * 1000);
+    // esp_deep_sleep_start();
+    // Source: http://educ8s.tv/esp32-deep-sleep-tutorial/
+    // TODO: I could not get that running yet!
+
+    // Deep sleep will shut off all pins.
+
+}
+
 int getHumidity(uint8_t vcc_out, uint8_t analog_in) {
 
     // turn sensor on:
     digitalWrite(vcc_out, HIGH);
-    delay(100); // the sensors takes some seconds until it is ready
+    delay(100); // the sensors takes some microseconds until it is ready
 
     // measure:
     int value_raw = analogRead(analog_in);
