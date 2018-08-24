@@ -21,7 +21,7 @@ function Actions(dbPath) {
 
         var promiseMkdirp
         var promiseInitDB
-        var promiseRunQuery
+        var promiseRunQuerySamples
 
         var dir = path.dirname(dbPath)
 
@@ -48,7 +48,7 @@ function Actions(dbPath) {
             })
 
 
-        var query = `CREATE TABLE IF NOT EXISTS samples(
+        var querySamples = `CREATE TABLE IF NOT EXISTS samples(
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
                 device_id INTEGER NOT NULL,
                 sensor_id INTEGER NOT NULL,
@@ -56,8 +56,8 @@ function Actions(dbPath) {
                 timestamp TEXT NOT NULL
             )`
 
-        await this.db.run(query, [], (err, res) => {
-            promiseRunQuery = new Promise((resolve, reject) => {
+        await this.db.run(querySamples, [], (err, res) => {
+            promiseRunQuerySamples = new Promise((resolve, reject) => {
                 if (err) {
                     reject(err)
                 } else {
@@ -66,7 +66,19 @@ function Actions(dbPath) {
             })
         })
 
-        return Promise.all([promiseMkdirp, promiseInitDB, promiseRunQuery])
+        // var queryMeta = `CREATE TABLE IF NOT EXISTS plants(
+        //     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        //     name TEXT NOT NULL,
+        //     color TEXT
+        // )`
+
+        // var querySensors = `CREATE TABLE IF NOT EXISTS sensors(
+        //     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        //     address TEXT NOT NULL
+        //     type TEXT NOT NULL
+        // )`
+
+        return Promise.all([promiseMkdirp, promiseInitDB, promiseRunQuerySamples])
 
     })(dbPath) // Constructor: Therefore called immediately
 
