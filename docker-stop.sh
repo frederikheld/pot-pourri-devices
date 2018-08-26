@@ -1,5 +1,5 @@
 # stop ui:
-sudo docker stop pot-pourri-ui
+docker stop pot-pourri-ui
 
 # stop datastore:
-sudo docker stop pot-pourri-datastore
+docker stop pot-pourri-datastore
