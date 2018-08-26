@@ -7,59 +7,7 @@
     <script src="./js/jquery-3.3.1.min.js" charset="utf-8"></script>
     <script src="./js/d3.v5.min.js" charset="utf-8"></script>
 
-    <style type="text/css">
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 14px;
-        }
-
-        #chart svg {
-            background: #fff;
-            width: 100%;
-            height: auto;
-        }
-
-        #chart .axis {
-            font-size: inherit;
-        }
-
-        #chart .line {
-            fill: none;
-            stroke-width: 1px;
-        }
-
-        #chart .line:hover {
-            stroke-width: 4px;
-        }
-
-        #chart .label {
-            text-anchor: start;
-            dominant-baseline: middle;
-            font-size: inherit;
-            font-family: inherit;
-            margin-top: 4px;
-        }
-
-        #chart .midnight-line line {
-            stroke: grey;
-        }
-
-        #chart .midnight-line text {
-            fill: grey;
-            text-anchor: start;
-            dominant-baseline: hanging;
-            font-size: inherit;
-            font-family: inherit;
-        }
-
-        .chart-legend {
-            width: calc(100% - 100px);
-            box-sizing: border-box;
-            border: 1px solid black;
-            padding: 10px;
-            margin: 20px 50px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="./styles.css">
 </head>
 
 <body>
@@ -67,29 +15,6 @@
     <div id="chart"></div>
 
     <script>
-        function httpGetAsync(url, callback) {
-            var xmlHttp = new XMLHttpRequest()
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    callback(xmlHttp.responseText)
-                }
-            }
-            xmlHttp.open("GET", url, true) // true for async
-            xmlHttp.send(null)
-        }
-        // Source: https://stackoverflow.com/questions/247483/http-get-request-in-javascript
-
-        // function getParameterByName(name, url) {
-        //     if (!url) url = window.location.href;
-        //     name = name.replace(/[\[\]]/g, '\\$&');
-        //     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-        //         results = regex.exec(url);
-        //     if (!results) return null;
-        //     if (!results[2]) return '';
-        //     return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        // }
-        // Source: https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
-
         function getSamplesAsync(startTime, endTime, callback) {
 
             $.getJSON("./config.json", function (data) {
@@ -100,8 +25,8 @@
                     "http://" + datastore_hostname + ":3000/api/v1/samples?timestampStart=" + startTime +
                     "&timestampEnd=2" + endTime
 
-                httpGetAsync(url, function (result) {
-                    callback(JSON.parse(result).data)
+                $.get(url, function (result) {
+                    callback(result.data)
                 })
 
             })
