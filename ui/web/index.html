@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <title>Auto Pot-Purri</title>
+    <script src="./js/jquery-3.3.1.min.js" charset="utf-8"></script>
     <script src="./js/d3.v5.min.js" charset="utf-8"></script>
 
     <style type="text/css">
@@ -78,12 +79,31 @@
         }
         // Source: https://stackoverflow.com/questions/247483/http-get-request-in-javascript
 
-        function getSamplesAsync(startTime, endTime, callback) {
-            var url =
-                "http://localhost:3000/api/v1/samples?timestampStart=" + startTime + "&timestampEnd=2" + endTime
+        // function getParameterByName(name, url) {
+        //     if (!url) url = window.location.href;
+        //     name = name.replace(/[\[\]]/g, '\\$&');
+        //     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        //         results = regex.exec(url);
+        //     if (!results) return null;
+        //     if (!results[2]) return '';
+        //     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        // }
+        // Source: https://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
 
-            httpGetAsync(url, function (result) {
-                callback(JSON.parse(result).data)
+        function getSamplesAsync(startTime, endTime, callback) {
+
+            $.getJSON("./config.json", function (data) {
+
+                var datastore_hostname = data.datastore_hostname
+
+                var url =
+                    "http://" + datastore_hostname + ":3000/api/v1/samples?timestampStart=" + startTime +
+                    "&timestampEnd=2" + endTime
+
+                httpGetAsync(url, function (result) {
+                    callback(JSON.parse(result).data)
+                })
+
             })
         }
     </script>

@@ -1,12 +1,15 @@
 'use strict'
 
+// -- imports
+
+var argv = require('minimist')(process.argv.slice(2))
 var express = require('express')
 var path = require("path")
 
 
 // -- config
 
-var port = 3002
+var port = argv.port || argv.p || 3002
 
 
 // -- publish web interface (client)
