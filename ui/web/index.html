@@ -17,12 +17,15 @@
     <script>
         function getSamplesAsync(startTime, endTime, callback) {
 
-            $.getJSON("./config.json", function (data) {
+            $.get("http://" + document.location.hostname + ":" + document.location.port + "/datastore", function (
+                result) {
 
-                var datastore_hostname = data.datastore_hostname
+                var datastore_hostname = result.data.datastore.hostname
+                var datastore_port = result.data.datastore.port
 
                 var url =
-                    "http://" + datastore_hostname + ":3000/api/v1/samples?timestampStart=" + startTime +
+                    "http://" + datastore_hostname + ":" + datastore_port + "/api/v1/samples?timestampStart=" +
+                    startTime +
                     "&timestampEnd=2" + endTime
 
                 $.get(url, function (result) {
