@@ -1,0 +1,23 @@
+@startuml
+participant Alice
+participant Bob
+
+Alice -> Bob : Hello Bob!
+activate Alice
+activate Bob
+
+Bob -> Alice: Fuck off!
+deactivate Bob
+
+Alice -> Alice : Note to myself:\nBob is a jerk!
+deactivate Alice
+
+Bob -> Alice : I'm sorry :-(
+activate Alice
+activate Bob
+
+Alice -> Bob : Mkay, you're forgiven.
+deactivate Alice
+deactivate Bob
+
+@enduml
