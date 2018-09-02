@@ -15,5 +15,8 @@
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "sqlite3": "^4.0.1"
+  },
+  "devDependencies": {
+    "ava": "^0.25.0"
   }
 }

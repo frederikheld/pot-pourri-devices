@@ -22,7 +22,6 @@ router.post('/samples', (req, res) => {
 
     actions.addSample(req.body)
         .then((result) => {
-            // console.log(result)
             return res.status(201).send({
                 msg: "Sample was successfully stored."
             })

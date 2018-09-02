@@ -13,7 +13,7 @@ Install Docker-Compose: https://docs.docker.com/compose/install/
 
 You can run each service individually as a stand-alone node app with `npm start` or inside a docker container. This is particularly helpful if you want to run the services on different machines.
 
-The easiest way is to run the app is to start all services at once. To do this, navigate in the terminal to the root directory of the app (where this README.md is located) and run `docker-compose up`. To stop the application, you can run `docker-compose down` in a separate terminal.
+The easiest way is to run the app is to start all services at once. To do this, simply run `docker-compose up` in the directory _./services_. To stop all services, you can run `docker-compose down` in a separate terminal window at the same location.
 
 `docker-compose up` will first build and then run all containers. If the containers already exist, it will not re-build them but use the existing ones. If you explicitly want to re-build all containers, use `docker-compose build` before you call `docker-compose up`.
 
