@@ -1,41 +1,20 @@
-# pot-pourri
+# pot-pourri-devices
 
-// todo: What does it do?
+This repository contains devices that can used together with pot-purri. You can find pot-pourri at https://github.com/frederikheld/pot-pourri.
 
-## Prepare environment
+## How does it work?
 
-To run the app, you need to have Docker and Docker-Compose installed. Please install it according to the following instructions in the Docker docs:
+In configured intervals the sensors will create a sample and send it to the configured API endpoint of _Datastore service_ of _pot-pourri_.
 
-Install Docker: https://docs.docker.com/install/
-Install Docker-Compose: https://docs.docker.com/compose/install/
+### pot-monitoring-wifi
 
-## Run it
-
-You can run each service individually as a stand-alone node app with `npm start` or inside a docker container. This is particularly helpful if you want to run the services on different machines.
-
-The easiest way is to run the app is to start all services at once. To do this, simply run `docker-compose up` in the directory _./services_. To stop all services, you can run `docker-compose down` in a separate terminal window at the same location.
-
-`docker-compose up` will first build and then run all containers. If the containers already exist, it will not re-build them but use the existing ones. If you explicitly want to re-build all containers, use `docker-compose build` before you call `docker-compose up`.
-
-## Architecture
-
-The pot-pourri application consists of several microservices that communicate via rest apis. See the api description of each service for more details.
-
-### datastore
-
-The `datasore` service accepts data items and stores them in an internal database.
-
-It also answers to requests for specified chunks of data.
-
-### ui
-
-The `ui` provides a graphical user interface that allows interaction with the app.
+WiFi-enabled NodeMCU devices are able to communicate directly with the configured API endpoint. They will do it in configured intervals and go to deep-sleep mode in-between to save battery life.
 
 ### pot-monitoring-serial
 
-The `pot-monitoring-serial` microservice provides connectivity to the datastore for devices, that do not have their own network interface, e. g. the classic Arduino Uno. You can connect such devices via serial interface to a device with network access and run this service there.
+`pot-monitoring-serial` is made for Arduino Uno devices without network connectivity. Therefore it comes with a service that provides connectivity to the _Datastore_ of _pot-pourri_. You have to run the service on a machine with network access and a serial connection to the device.
 
-> This service will _not_ be automatically run when the app is started with `docker-compose up`!
+To start the service run `npm start` in _./pot-monitoring-serial_.
 
 ## Useful links
 

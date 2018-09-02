@@ -1,1 +1,0 @@
-echo "Hello World! It's $(date -Iseconds)" >> /db/hello.txt
