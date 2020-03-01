@@ -64,7 +64,7 @@ void wifiConnect(const char* ssid, const char* password) {
   Serial.println(WiFi.localIP());
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -113,7 +113,7 @@ void setup() {
   Serial.begin(115200);
   wifiConnect(wifi_ssid, wifi_secret);
   mqttClient.setServer(mqtt_server, 1883);
-  mqttClient.setCallback(callback);
+  mqttClient.setCallback(mqttMessageReceivedCallback);
 }
 
 void loop() {
