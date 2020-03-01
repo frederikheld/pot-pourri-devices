@@ -28,39 +28,56 @@
  * and fill in the settings according to your setup!
  */
 
+// -- import config
+
 #include "config.h"
+
+
+// -- import libraries
 
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// Update these with values suitable for your network.
 
+// -- define global objects
+
+// wifi client:
 WiFiClient wifiClient;
+
+// mqtt client:
 PubSubClient mqttClient(wifiClient);
+
+
+// -- define global vars
+
 long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-void wifiConnect(const char* ssid, const char* password) {
+
+// -- functions
+
+void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) {
 
   delay(10);
-  // We start by connecting to a WiFi network
+  
   Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.print("Attempting to connect to WiFi ");
+  Serial.print(ssid);
+  Serial.print(".");
 
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(retry_delay);
     Serial.print(".");
   }
 
   randomSeed(micros());
-
+  
+    
   Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+  Serial.print("WiFi connected. Local IP is ");
   Serial.println(WiFi.localIP());
 }
 
@@ -111,7 +128,7 @@ void mqttReconnect(PubSubClient mqttClient) {
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
-  wifiConnect(wifi_ssid, wifi_secret);
+  wifiConnect(wifi_ssid, wifi_secret, wifi_connect_retry_delay);
   mqttClient.setServer(mqtt_server, 1883);
   mqttClient.setCallback(mqttMessageReceivedCallback);
 }
