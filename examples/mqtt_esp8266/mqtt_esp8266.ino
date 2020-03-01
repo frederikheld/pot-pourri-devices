@@ -35,8 +35,8 @@
 
 // Update these with values suitable for your network.
 
-WiFiClient espClient;
-PubSubClient mqttClient(espClient);
+WiFiClient wifiClient;
+PubSubClient mqttClient(wifiClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
