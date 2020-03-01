@@ -23,11 +23,10 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 
-// -- define global vars
+// -- define global variables:
 
-long lastMsg = 0;
-char msg[50];
-int value = 0;
+bool mqtt_message_is_received = false;
+char* mqtt_received_message;
 
 
 // -- functions
@@ -55,7 +54,27 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
   Serial.println(WiFi.localIP());
 }
 
-//void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
+void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
+
+    char result[length];
+    sprintf(result, "%s", payload);
+//    for (int i = 0; i < length; i++) {
+//      result += (char)payload[i];
+//    }
+
+    Serial.println("");
+    Serial.print("Message received on topic ");
+    Serial.print(topic);
+    Serial.print(": ");
+    Serial.println(result);
+//    for (int i = 0; i < length; i++) {
+//      Serial.print((char)payload[i]);
+//    }
+//    Serial.println();
+
+    mqtt_message_is_received = true;
+    mqtt_received_message = result;
+    
 //  Serial.print("Message arrived [");
 //  Serial.print(topic);
 //  Serial.print("] ");
@@ -73,7 +92,7 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 //    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
 //  }
 //
-//}
+}
 
 void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 5000) {
   
@@ -95,11 +114,9 @@ void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
       Serial.print("  MQTT connected. Client ID is ");
       Serial.println(mqttClientId);
       
-//      // once connected, publish an announcement...
-//      mqttClient.publish(mqtt_topic, "hello world");
-      
-//      // ... and subscribe
-//      mqttClient.subscribe(mqtt_topic);
+      // subscribe to outgoing channel to be able
+      // to check if message was delivered:
+      mqttClient.subscribe("foo");
 
     } else {
       
@@ -115,7 +132,32 @@ void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
   }
 }
 
+void deepSleepSeconds(int time_in_seconds) {
+
+//    // turn all outputs off:
+//    digitalWrite(HEARTBEAT_PIN, LOW);
+//    digitalWrite(SENSOR_HUMIDITY_VCC_OUT, LOW);
+
+    // no deep sleep:
+    // delay(time_in_seconds * 1000);
+
+    // with bridge between RST and D0
+    ESP.deepSleep(time_in_seconds * 1000 * 1000); // time in microseconds!
+
+    // without bridge between RST and D0
+    // esp_sleep_enable_timer_wakeup(BLINK_INTERVAL * 1000 * 1000);
+    // esp_deep_sleep_start();
+    // Source: http://educ8s.tv/esp32-deep-sleep-tutorial/
+    // TODO: I could not get that running yet!
+
+    // Deep sleep will shut off all pins.
+
+}
+
 void setup() {
+
+  // -- SETUP
+  
 //  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
 
   // start serial:
@@ -126,23 +168,47 @@ void setup() {
 
   // connect mqtt:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-//  mqttClient.setCallback(mqttMessageReceivedCallback);
-}
+  mqttClient.setCallback(mqttMessageReceivedCallback);
 
-void loop() {
 
+  // -- LOOP
+
+  // connect to mqtt broker:
   if (!mqttClient.connected()) {
     mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY);
   }
   mqttClient.loop();
 
-  long now = millis();
-  if (now - lastMsg > 5000) {
-    lastMsg = now;
-    ++value;
-    snprintf (msg, 50, "hello world #%ld", value);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    mqttClient.publish("foo", msg);
+  // read sensors:
+
+
+  // send data:
+  char msg[50];
+  int value = 1;
+  snprintf (msg, 50, "hello world #%ld", millis());
+  Serial.print("Publish message: ");
+  Serial.println(msg);
+  mqttClient.publish("foo", msg);
+
+  // wait until data was received
+  // (if I get it, the broker has sent it to other clients as well):
+  Serial.print("Waiting for message to be delivered.");
+  while (!mqtt_message_is_received) {
+    delay(500);
+    Serial.print(".");
+    mqttClient.loop();
   }
+  Serial.println();
+  Serial.print("  Message: ");
+  Serial.println(mqtt_received_message);
+
+
+  // -- INITIALIZE DEEP SLEEP
+
+  Serial.println("Entering deep sleep mode.");
+  deepSleepSeconds(SAMPLING_INTERVAL);
+}
+
+void loop() {
+  
 }

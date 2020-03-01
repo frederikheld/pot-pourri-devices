@@ -2,6 +2,7 @@
 
 // device:
 #define DEVICE_ID 0 // has to be unique per datastore!
+#define SAMPLING_INTERVAL 10 // in seconds. Note: The time it takes to collect and send the data goes on top!
 
 
 // -- CONECTIVITY
@@ -9,12 +10,12 @@
 // wifi:
 #define WIFI_SSID "<wifi-ssid>"
 #define WIFI_SECRET "<wifi-secret>"
-#define WIFI_CONNECT_RETRY_DELAY 500 // Optional. Time to wait (in milliseconds) before retrying if connect to wifi failed. Defaults to 500.
+#define WIFI_CONNECT_RETRY_DELAY 500 // optional. Time to wait (in milliseconds) before retrying if connect to wifi failed. Defaults to 500.
 
 // mqtt:
 #define MQTT_SERVER "<mqtt-broker-ip-or-hostname>"
 #define MQTT_PORT = 1883
-#define MQTT_CONNECT_RETRY_DELAY 5000 // Optional. Time to wait (in milliseconds) before retrying if connect to mqtt broker failed. Defaults to 5000.
+#define MQTT_CONNECT_RETRY_DELAY 5000 // optional. Time to wait (in milliseconds) before retrying if connect to mqtt broker failed. Defaults to 5000.
 
 
 // -- SENSORS
