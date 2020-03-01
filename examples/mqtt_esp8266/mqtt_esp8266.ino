@@ -75,7 +75,7 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 //
 //}
 
-void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port = 1883, const int mqtt_connect_retry_delay = 5000) {
+void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 5000) {
   
   Serial.print("Attempting to connect to MQTT broker at ");
   Serial.print(mqtt_server);
@@ -122,17 +122,17 @@ void setup() {
   Serial.begin(115200);
 
   // connect wifi:
-  wifiConnect(wifi_ssid, wifi_secret, wifi_connect_retry_delay);
+  wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY);
 
   // connect mqtt:
-  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
 //  mqttClient.setCallback(mqttMessageReceivedCallback);
 }
 
 void loop() {
 
   if (!mqttClient.connected()) {
-    mqttConnect(device_id, mqttClient, mqtt_server, mqtt_port, mqtt_connect_retry_delay);
+    mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY);
   }
   mqttClient.loop();
 
@@ -143,6 +143,6 @@ void loop() {
     snprintf (msg, 50, "hello world #%ld", value);
     Serial.print("Publish message: ");
     Serial.println(msg);
-    mqttClient.publish(mqtt_topic, msg);
+    mqttClient.publish("foo", msg);
   }
 }
