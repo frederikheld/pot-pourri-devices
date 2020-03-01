@@ -41,7 +41,7 @@ long lastMsg = 0;
 char msg[50];
 int value = 0;
 
-void setup_wifi() {
+void setup_wifi(const char* ssid, const char* password) {
 
   delay(10);
   // We start by connecting to a WiFi network
@@ -111,7 +111,7 @@ void reconnect() {
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
-  setup_wifi();
+  setup_wifi(wifi_ssid, wifi_secret);
   mqttClient.setServer(mqtt_server, 1883);
   mqttClient.setCallback(callback);
 }
