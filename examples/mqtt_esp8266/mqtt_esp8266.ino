@@ -74,47 +74,50 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
   }
 
   randomSeed(micros());
-  
     
   Serial.println("");
   Serial.print("WiFi connected. Local IP is ");
   Serial.println(WiFi.localIP());
 }
 
-void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
-  }
-
-}
+//void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
+//  Serial.print("Message arrived [");
+//  Serial.print(topic);
+//  Serial.print("] ");
+//  for (int i = 0; i < length; i++) {
+//    Serial.print((char)payload[i]);
+//  }
+//  Serial.println();
+//
+//  // Switch on the LED if an 1 was received as first character
+//  if ((char)payload[0] == '1') {
+//    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+//    // but actually the LED is on; this is because
+//    // it is active low on the ESP-01)
+//  } else {
+//    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+//  }
+//
+//}
 
 void mqttReconnect(PubSubClient mqttClient) {
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
+    
     // Create a random mqttClient ID
     String mqttClientId = "ESP8266Client-";
     mqttClientId += String(random(0xffff), HEX);
+    
     // Attempt to connect
     if (mqttClient.connect(mqttClientId.c_str())) {
       Serial.println("connected");
+      
       // Once connected, publish an announcement...
       mqttClient.publish(mqtt_topic, "hello world");
-      // ... and resubscribe
-      mqttClient.subscribe(mqtt_topic);
+      
+//      // ... and resubscribe
+//      mqttClient.subscribe(mqtt_topic);
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqttClient.state());
@@ -130,7 +133,7 @@ void setup() {
   Serial.begin(115200);
   wifiConnect(wifi_ssid, wifi_secret, wifi_connect_retry_delay);
   mqttClient.setServer(mqtt_server, 1883);
-  mqttClient.setCallback(mqttMessageReceivedCallback);
+//  mqttClient.setCallback(mqttMessageReceivedCallback);
 }
 
 void loop() {
