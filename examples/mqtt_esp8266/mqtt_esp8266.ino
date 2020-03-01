@@ -36,7 +36,7 @@
 // Update these with values suitable for your network.
 
 WiFiClient espClient;
-PubSubClient client(espClient);
+PubSubClient mqttClient(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
@@ -86,21 +86,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "ESP8266Client-";
-    clientId += String(random(0xffff), HEX);
+    // Create a random mqttClient ID
+    String mqttClientId = "ESP8266Client-";
+    mqttClientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str())) {
+    if (mqttClient.connect(mqttClientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish(mqtt_topic, "hello world");
+      mqttClient.publish(mqtt_topic, "hello world");
       // ... and resubscribe
-      client.subscribe(mqtt_topic);
+      mqttClient.subscribe(mqtt_topic);
     } else {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(mqttClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -112,16 +112,16 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setCallback(callback);
 }
 
 void loop() {
 
-  if (!client.connected()) {
+  if (!mqttClient.connected()) {
     reconnect();
   }
-  client.loop();
+  mqttClient.loop();
 
   long now = millis();
   if (now - lastMsg > 2000) {
@@ -130,6 +130,6 @@ void loop() {
     snprintf (msg, 50, "hello world #%ld", value);
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish(mqtt_topic, msg);
+    mqttClient.publish(mqtt_topic, msg);
   }
 }
