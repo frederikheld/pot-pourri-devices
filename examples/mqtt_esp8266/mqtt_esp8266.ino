@@ -1,29 +1,4 @@
 /*
- Basic ESP8266 MQTT example
-
- This sketch demonstrates the capabilities of the pubsub library in combination
- with the ESP8266 board/library.
-
- It connects to an MQTT server then:
-  - publishes "hello world" to the topic "outTopic" every two seconds
-  - subscribes to the topic "inTopic", printing out any messages
-    it receives. NB - it assumes the received payloads are strings not binary
-  - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
-    else switch it off
-
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
-
- To install the ESP8266 board, (using Arduino 1.6.4+):
-  - Add the following 3rd party board manager under "File -> Preferences -> Additional Boards Manager URLs":
-       http://arduino.esp8266.com/stable/package_esp8266com_index.json
-  - Open the "Tools -> Board -> Board Manager" and click install for the ESP8266"
-  - Select your ESP8266 in "Tools -> Board"
-
-*/
-
-/*
  * Rename config.template.h to config.h
  * and fill in the settings according to your setup!
  */
@@ -75,8 +50,8 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 
   randomSeed(micros());
     
-  Serial.println("");
-  Serial.print("WiFi connected. Local IP is ");
+  Serial.println();
+  Serial.print("  WiFi connected. Local IP is ");
   Serial.println(WiFi.localIP());
 }
 
@@ -100,38 +75,56 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 //
 //}
 
-void mqttReconnect(PubSubClient mqttClient) {
-  // Loop until we're reconnected
+void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port = 1883, const int mqtt_connect_retry_delay = 5000) {
+  
+  Serial.print("Attempting to connect to MQTT broker at ");
+  Serial.print(mqtt_server);
+  Serial.print(":");
+  Serial.print(mqtt_port);
+  Serial.println(".");
+  
   while (!mqttClient.connected()) {
-    Serial.print("Attempting MQTT connection...");
     
-    // Create a random mqttClient ID
-    String mqttClientId = "ESP8266Client-";
-    mqttClientId += String(random(0xffff), HEX);
+    // create a mqtt client id out of the device_id:
+    String mqttClientId = "PotPourriDevice-";
+    mqttClientId += String(device_id);
     
-    // Attempt to connect
+    // attempt to connect:
     if (mqttClient.connect(mqttClientId.c_str())) {
-      Serial.println("connected");
       
-      // Once connected, publish an announcement...
-      mqttClient.publish(mqtt_topic, "hello world");
+      Serial.print("  MQTT connected. Client ID is ");
+      Serial.println(mqttClientId);
       
-//      // ... and resubscribe
+//      // once connected, publish an announcement...
+//      mqttClient.publish(mqtt_topic, "hello world");
+      
+//      // ... and subscribe
 //      mqttClient.subscribe(mqtt_topic);
+
     } else {
-      Serial.print("failed, rc=");
+      
+      Serial.print("  Failed with error code = ");
       Serial.print(mqttClient.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+      Serial.print("! Trying again in ");
+      Serial.print(mqtt_connect_retry_delay);
+      Serial.println(" ms.");
+      
+      // wait 5 seconds before retrying:
+      delay(mqtt_connect_retry_delay);
     }
   }
 }
 
 void setup() {
-  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
+//  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
+
+  // start serial:
   Serial.begin(115200);
+
+  // connect wifi:
   wifiConnect(wifi_ssid, wifi_secret, wifi_connect_retry_delay);
+
+  // connect mqtt:
   mqttClient.setServer(mqtt_server, 1883);
 //  mqttClient.setCallback(mqttMessageReceivedCallback);
 }
@@ -139,12 +132,12 @@ void setup() {
 void loop() {
 
   if (!mqttClient.connected()) {
-    mqttReconnect(mqttClient);
+    mqttConnect(device_id, mqttClient, mqtt_server, mqtt_port, mqtt_connect_retry_delay);
   }
   mqttClient.loop();
 
   long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 5000) {
     lastMsg = now;
     ++value;
     snprintf (msg, 50, "hello world #%ld", value);
