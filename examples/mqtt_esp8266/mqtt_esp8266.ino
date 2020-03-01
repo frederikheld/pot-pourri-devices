@@ -84,7 +84,7 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
 
 }
 
-void mqttReconnect() {
+void mqttReconnect(PubSubClient mqttClient) {
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
@@ -119,7 +119,7 @@ void setup() {
 void loop() {
 
   if (!mqttClient.connected()) {
-    mqttReconnect();
+    mqttReconnect(mqttClient);
   }
   mqttClient.loop();
 
