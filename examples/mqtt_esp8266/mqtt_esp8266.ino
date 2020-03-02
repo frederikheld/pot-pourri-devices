@@ -65,12 +65,12 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
       result[length] = '\0';
     }
     
-    // print to serial:
-    Serial.println("");
-    Serial.print("Message received on topic ");
-    Serial.print(topic);
-    Serial.print(": ");
-    Serial.println(result);
+//    // print to serial:
+//    Serial.println("");
+//    Serial.print("Message received on topic ");
+//    Serial.print(topic);
+//    Serial.print(": ");
+//    Serial.println(result);
 
     // return value:
     mqtt_message_is_received = true;
@@ -169,21 +169,25 @@ void setup() {
   char msg[50];
   int value = 1;
   snprintf (msg, 50, "hello world #%ld", millis());
-  Serial.print("Publish message: ");
+  Serial.print("Publishing message: ");
   Serial.println(msg);
   mqttClient.publish("foo", msg);
 
   // wait until data was received
-  // (if I get it, the broker has sent it to other clients as well):
-  Serial.print("Waiting for message to be delivered.");
+  // (if I received it, the broker has sent it to other clients as well):
+  Serial.print("  Waiting for message to be delivered.");
   while (!mqtt_message_is_received) {
     delay(1000);
     Serial.print(".");
     mqttClient.loop();
+
+    // reset mqtt_message_is_received if wrong message was received:
+    if (mqtt_message_is_received && !strcmp(mqtt_received_message, msg) == 0) {
+      mqtt_message_is_received = false;
+    }
   }
-  Serial.println();
-  Serial.print("  Message: ");
-  Serial.println(mqtt_received_message);
+
+  Serial.println(" Done.");
 
 
   // -- INITIALIZE DEEP SLEEP
