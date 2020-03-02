@@ -56,23 +56,34 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 
 void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
 
-    char result[length];
-    sprintf(result, "%s", payload);
+    Serial.println();
+    Serial.print("  callback payload length = ");
+    Serial.println(length);
+
+//    char result[length];
+    char* result;
+    result = (char*)payload;
+    
+    //strcat(result, (char*)payload);
 //    for (int i = 0; i < length; i++) {
+////      strcat(result, (char)payload[i]);
 //      result += (char)payload[i];
 //    }
+//    memset(result, '\0', sizeof(result));
+//    sprintf(&result, "%s", payload);
 
+    // print to serial:
     Serial.println("");
     Serial.print("Message received on topic ");
     Serial.print(topic);
     Serial.print(": ");
     Serial.println(result);
-//    for (int i = 0; i < length; i++) {
-//      Serial.print((char)payload[i]);
-//    }
-//    Serial.println();
 
+    // return value:
     mqtt_message_is_received = true;
+    
+    //memset(mqtt_received_message, '\0', sizeof(mqtt_received_message));
+//    strcpy(mqtt_received_message, result);
     mqtt_received_message = result;
     
 //  Serial.print("Message arrived [");
@@ -194,7 +205,7 @@ void setup() {
   // (if I get it, the broker has sent it to other clients as well):
   Serial.print("Waiting for message to be delivered.");
   while (!mqtt_message_is_received) {
-    delay(500);
+    delay(1000);
     Serial.print(".");
     mqttClient.loop();
   }
