@@ -56,22 +56,15 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 
 void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
 
-    Serial.println();
-    Serial.print("  callback payload length = ");
-    Serial.println(length);
-
-//    char result[length];
+    // convert byte* payload to char*:
     char* result;
     result = (char*)payload;
-    
-    //strcat(result, (char*)payload);
-//    for (int i = 0; i < length; i++) {
-////      strcat(result, (char)payload[i]);
-//      result += (char)payload[i];
-//    }
-//    memset(result, '\0', sizeof(result));
-//    sprintf(&result, "%s", payload);
 
+    // truncate to correct length:
+    if (length <= strlen(result)) {
+      result[length] = '\0';
+    }
+    
     // print to serial:
     Serial.println("");
     Serial.print("Message received on topic ");
@@ -81,28 +74,7 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
 
     // return value:
     mqtt_message_is_received = true;
-    
-    //memset(mqtt_received_message, '\0', sizeof(mqtt_received_message));
-//    strcpy(mqtt_received_message, result);
     mqtt_received_message = result;
-    
-//  Serial.print("Message arrived [");
-//  Serial.print(topic);
-//  Serial.print("] ");
-//  for (int i = 0; i < length; i++) {
-//    Serial.print((char)payload[i]);
-//  }
-//  Serial.println();
-//
-//  // Switch on the LED if an 1 was received as first character
-//  if ((char)payload[0] == '1') {
-//    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-//    // but actually the LED is on; this is because
-//    // it is active low on the ESP-01)
-//  } else {
-//    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
-//  }
-//
 }
 
 void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 5000) {
