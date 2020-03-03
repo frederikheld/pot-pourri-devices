@@ -11,6 +11,7 @@
 #define WIFI_SSID "<wifi-ssid>"
 #define WIFI_SECRET "<wifi-secret>"
 #define WIFI_CONNECT_RETRY_DELAY 500 // time to wait (in milliseconds) before retrying if connect to wifi failed
+#define WIFI_CONNECT_RETRY_TIMEOUT 10000 // time (in milliseconds) until a failed attempt to connect to wifi will be aborted
 
 // mqtt:
 #define MQTT_SERVER "<mqtt-broker-ip-or-hostname>"

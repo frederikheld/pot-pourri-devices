@@ -31,9 +31,7 @@ char* mqtt_received_message;
 
 // -- functions
 
-void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) {
-
-  delay(10);
+void wifiConnect(const char* ssid, const char* password, int connect_retry_delay = 500, int connect_retry_timeout = 10000) {
   
   Serial.println();
   Serial.print("Attempting to connect to WiFi ");
@@ -42,14 +40,26 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(retry_delay);
+  while (WiFi.status() != WL_CONNECTED && connect_retry_timeout > 0) {
     Serial.print(".");
+
+    // prepare next loop:
+    connect_retry_timeout -= connect_retry_delay;
+    delay(connect_retry_delay);
+  }
+
+  if (connect_retry_timeout <= 0) {
+    Serial.println(" Timed out.");    
+  } else {
+    Serial.println(" Done.");
   }
 
   randomSeed(micros());
-    
-  Serial.println();
+  // what is this good for? It's from the example.
+  // micros() is about the same value in each run, 
+  // so even if randomSeed() has a purpose here,
+  // it won't be as random as expected!
+  
   Serial.print("  WiFi connected. Local IP is ");
   Serial.println(WiFi.localIP());
 }
@@ -112,6 +122,7 @@ void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
       delay(mqtt_connect_retry_delay);
     }
   }
+  
 }
 
 void deepSleepSeconds(int time_in_seconds) {
@@ -146,7 +157,7 @@ void setup() {
   Serial.begin(115200);
 
   // connect wifi:
-  wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY);
+  wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT);
 
   // connect mqtt:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
@@ -195,7 +206,7 @@ void setup() {
   }
 
   if (receive_retry_timeout <= 0) {
-      Serial.println(" Timed out.");    
+    Serial.println(" Timed out.");    
   } else {
     Serial.println(" Done.");
   }
