@@ -57,8 +57,7 @@ void wifiConnect(const char* ssid, const char* password, int retry_delay = 500) 
 void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
 
     // convert byte* payload to char*:
-    char* result;
-    result = (char*)payload;
+    char* result = (char*) payload;
 
     // truncate to correct length:
     if (length <= strlen(result)) {
@@ -136,7 +135,7 @@ void deepSleepSeconds(int time_in_seconds) {
     // Deep sleep will shut off all pins.
 
 }
-
+  
 void setup() {
 
   // -- SETUP
@@ -173,11 +172,15 @@ void setup() {
   Serial.println(msg);
   mqttClient.publish("foo", msg);
 
-  // wait until data was received
-  // (if I received it, the broker has sent it to other clients as well):
-  Serial.print("  Waiting for message to be delivered.");
-  while (!mqtt_message_is_received) {
-    delay(1000);
+  // wait until message was rebounced:
+  // (if I received it, the broker has sent it to other clients as well
+  // but we can't make sure that it was acutally delivered to the datastore):
+  Serial.print("  Waiting for message to be rebounced.");
+  
+  int receive_retry_delay = MQTT_SEND_REBOUNCE_DELAY;
+  int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
+  
+  while (!mqtt_message_is_received && receive_retry_timeout > 0) {
     Serial.print(".");
     mqttClient.loop();
 
@@ -185,9 +188,17 @@ void setup() {
     if (mqtt_message_is_received && !strcmp(mqtt_received_message, msg) == 0) {
       mqtt_message_is_received = false;
     }
+
+    // prepare next loop:
+    receive_retry_timeout -= receive_retry_delay;
+    delay(receive_retry_delay);
   }
 
-  Serial.println(" Done.");
+  if (receive_retry_timeout <= 0) {
+      Serial.println(" Timed out.");    
+  } else {
+    Serial.println(" Done.");
+  }
 
 
   // -- INITIALIZE DEEP SLEEP
