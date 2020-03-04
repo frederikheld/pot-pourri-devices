@@ -55,18 +55,12 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
     Serial.println(" Timed out.");
     return false;
   } else {
-    Serial.println(" Done.");
+    Serial.println(" Connected.");
+    Serial.print("  Assigned IP is ");
+    Serial.print(WiFi.localIP());
+    Serial.println(".");
     return true;
   }
-
-  randomSeed(micros());
-  // what is this good for? It's from the example.
-  // micros() is about the same value in each run, 
-  // so even if randomSeed() has a purpose here,
-  // it won't be as random as expected!
-  
-  Serial.print("  WiFi connected. Local IP is ");
-  Serial.println(WiFi.localIP());
 }
 
 bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
@@ -111,9 +105,9 @@ bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
     
   } else {
     
-    Serial.println(" Done.");
+    Serial.println(" Connected.");
       
-    Serial.print("  MQTT connected. Client ID is ");
+    Serial.print("  Client ID is ");
     Serial.print(mqttClientId);
     Serial.println(".");
 
@@ -168,9 +162,10 @@ void deepSleepSeconds(int time_in_seconds) {
 }
 
 /**
- * This function wraps the work that is being done inside setup().
- * It's purpose is to be able to exit the control flow if an
- * connection attempt times out and jump directly to deep sleep.
+ * This function wraps the work, that is being done inside setup().
+ * It allows to exit the control flow if an connection attempt
+ * times out and then jump directly to deep sleep.
+ * This avoids the use of goto statements.
  */
 bool doWork() {
 
