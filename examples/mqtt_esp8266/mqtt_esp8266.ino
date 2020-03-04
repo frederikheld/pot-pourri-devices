@@ -31,7 +31,10 @@ char* mqtt_received_message;
 
 // -- functions
 
-void wifiConnect(const char* ssid, const char* password, int connect_retry_delay = 500, int connect_retry_timeout = 10000) {
+bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_retry_delay = 500, const int wifi_connect_retry_timeout = 10000) {
+
+  int retry_delay = wifi_connect_retry_delay;
+  int retry_timeout = wifi_connect_retry_timeout;
   
   Serial.println();
   Serial.print("Attempting to connect to WiFi ");
@@ -40,18 +43,20 @@ void wifiConnect(const char* ssid, const char* password, int connect_retry_delay
 
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED && connect_retry_timeout > 0) {
+  while (WiFi.status() != WL_CONNECTED && retry_timeout > 0) {
     Serial.print(".");
 
     // prepare next loop:
-    connect_retry_timeout -= connect_retry_delay;
-    delay(connect_retry_delay);
+    retry_timeout -= retry_delay;
+    delay(retry_delay);
   }
 
-  if (connect_retry_timeout <= 0) {
-    Serial.println(" Timed out.");    
+  if (retry_timeout <= 0) {
+    Serial.println(" Timed out.");
+    return false;
   } else {
     Serial.println(" Done.");
+    return true;
   }
 
   randomSeed(micros());
@@ -62,6 +67,60 @@ void wifiConnect(const char* ssid, const char* password, int connect_retry_delay
   
   Serial.print("  WiFi connected. Local IP is ");
   Serial.println(WiFi.localIP());
+}
+
+bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
+  
+  int retry_delay = mqtt_connect_retry_delay;
+  int retry_timeout = mqtt_connect_retry_timeout;
+  
+  Serial.print("Attempting to connect to MQTT broker at ");
+  Serial.print(mqtt_server);
+  Serial.print(":");
+  Serial.print(mqtt_port);
+  Serial.print(".");
+      
+  // create a mqtt client id out of the device_id:
+  String mqttClientId = "PotPourriDevice-";
+  mqttClientId += String(device_id);
+    
+  while (!mqttClient.connected() && retry_timeout > 0) {
+    
+    // attempt to connect:
+    if (mqttClient.connect(mqttClientId.c_str())) {
+      break;
+    } else {
+      Serial.print(".");
+            
+      // prepare next loop:
+      retry_timeout -= (retry_delay + 1000); // * see note below
+      delay(retry_delay);
+    }
+  }
+
+  // * note: PubSubClient::connect() uses Arduinos client.connect() function
+  //         which has a default timeout of 1000 ms. This adds to the timeout
+  //         which is defined in config.h!
+
+  if (retry_timeout <= 0) {
+    
+    Serial.print(" Timed out. Error code ");
+    Serial.println(mqttClient.state());
+    
+    return false;
+    
+  } else {
+    
+    Serial.println(" Done.");
+      
+    Serial.print("  MQTT connected. Client ID is ");
+    Serial.print(mqttClientId);
+    Serial.println(".");
+
+    return true;
+    
+  }
+  
 }
 
 void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
@@ -86,45 +145,6 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
     mqtt_received_message = result;
 }
 
-void mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 5000) {
-  
-  Serial.print("Attempting to connect to MQTT broker at ");
-  Serial.print(mqtt_server);
-  Serial.print(":");
-  Serial.print(mqtt_port);
-  Serial.println(".");
-  
-  while (!mqttClient.connected()) {
-    
-    // create a mqtt client id out of the device_id:
-    String mqttClientId = "PotPourriDevice-";
-    mqttClientId += String(device_id);
-    
-    // attempt to connect:
-    if (mqttClient.connect(mqttClientId.c_str())) {
-      
-      Serial.print("  MQTT connected. Client ID is ");
-      Serial.println(mqttClientId);
-      
-      // subscribe to outgoing channel to be able
-      // to check if message was delivered:
-      mqttClient.subscribe("foo");
-
-    } else {
-      
-      Serial.print("  Failed with error code = ");
-      Serial.print(mqttClient.state());
-      Serial.print("! Trying again in ");
-      Serial.print(mqtt_connect_retry_delay);
-      Serial.println(" ms.");
-      
-      // wait 5 seconds before retrying:
-      delay(mqtt_connect_retry_delay);
-    }
-  }
-  
-}
-
 void deepSleepSeconds(int time_in_seconds) {
 
 //    // turn all outputs off:
@@ -146,31 +166,33 @@ void deepSleepSeconds(int time_in_seconds) {
     // Deep sleep will shut off all pins.
 
 }
-  
-void setup() {
 
-  // -- SETUP
-  
-//  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
+/**
+ * This function wraps the work that is being done inside setup().
+ * It's purpose is to be able to exit the control flow if an
+ * connection attempt times out and jump directly to deep sleep.
+ */
+bool doWork() {
 
-  // start serial:
-  Serial.begin(115200);
+  // connect to wifi:
+  if (!wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT)) {
+    return false;
+  }
 
-  // connect wifi:
-  wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT);
-
-  // connect mqtt:
+  // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
   mqttClient.setCallback(mqttMessageReceivedCallback);
 
-
-  // -- LOOP
-
-  // connect to mqtt broker:
-  if (!mqttClient.connected()) {
-    mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY);
+  if(!mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY, MQTT_CONNECT_RETRY_TIMEOUT)) {
+    return false;
   }
-  mqttClient.loop();
+
+  // subscibe to outgoing topic to be able
+  // to check if message was delivered:
+  mqttClient.subscribe("foo");
+
+  // receive messages:
+//  mqttClient.loop();
 
   // read sensors:
 
@@ -206,18 +228,42 @@ void setup() {
   }
 
   if (receive_retry_timeout <= 0) {
-    Serial.println(" Timed out.");    
+    Serial.println(" Timed out.");
+    return false;
   } else {
     Serial.println(" Done.");
   }
+  
+  return true;
+  
+}
+  
+void setup() {
 
+  // -- SETUP
+  
+//  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
 
-  // -- INITIALIZE DEEP SLEEP
+  // start serial:
+  Serial.begin(9600);
 
-  Serial.println("Entering deep sleep mode.");
+  
+  // -- WORK
+  
+  doWork();
+
+  
+  // -- SLEEP
+
+  // init deep sleep:
+  Serial.print("Going to deep sleep for ");
+  Serial.print(SAMPLING_INTERVAL);
+  Serial.println(" seconds.");
   deepSleepSeconds(SAMPLING_INTERVAL);
+
+
 }
 
 void loop() {
-  
+  // to be able to use deep sleep, loop has to stay empty!
 }
