@@ -126,13 +126,6 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
     if (length <= strlen(result)) {
       result[length] = '\0';
     }
-    
-//    // print to serial:
-//    Serial.println("");
-//    Serial.print("Message received on topic ");
-//    Serial.print(topic);
-//    Serial.print(": ");
-//    Serial.println(result);
 
     // return value:
     mqtt_message_is_received = true;
