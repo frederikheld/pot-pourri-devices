@@ -234,7 +234,7 @@ bool doWork() {
   }
 
   // init mqtt topics:
-  String mqtt_topic_humidity = "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HUMIDITY_ID);
+  String mqtt_topic_humidity = "devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HUMIDITY_ID);
 
   // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
