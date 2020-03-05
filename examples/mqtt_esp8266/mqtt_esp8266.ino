@@ -1,6 +1,10 @@
 /*
- * Rename config.template.h to config.h
- * and fill in the settings according to your setup!
+ * Instructions:
+ *  - rename config.template.h to config.h
+ *    and fill in the settings according to your setup
+ *  - install libraries as explained in README.md
+ *  - select the correct board
+ *  - upload the sketch
  */
 
 // -- import config
