@@ -88,7 +88,7 @@ bool mqttConnect(const int device_id, PubSubClient mqttClient, const char* mqtt_
       break;
     } else {
       Serial.print(".");
-            
+      
       // prepare next loop:
       retry_timeout -= (retry_delay + 1000); // * see note below
       delay(retry_delay);
@@ -127,15 +127,20 @@ bool mqttSendMessage(const char* topic, const char* message) {
   // publish message on given topic:
   Serial.print("Publishing message '");
   Serial.print(message);
+  Serial.print("' on topic '");
+  Serial.print(topic);
   Serial.print("'.");
   
   mqttClient.publish(topic, message);
 
   // wait until message was rebounced:
-  // Note: This library doesn't offer QoS levels that make sure that the message
-  //       was delivered. By waiting for the message to be delivered back to this
-  //       device we can at least make sure that it was delivered to the broker
-  //       but we can't make sure that it was acutally delivered to the datastore.
+  // Note: This is not an implement of QoS 1 (which this library is lacking)
+  //       as there will be no attempt to send the message again if it failed.
+  //       This behavior could be added though.
+  //       Right now it just makes sure that the message is fully sent before
+  //       the board enters deep sleep mode. By waiting for the message to be
+  //       delivered back to this device we can make sure that it was delivered
+  //       to the broker.
   
   int receive_retry_delay = MQTT_SEND_REBOUNCE_DELAY;
   int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
@@ -227,7 +232,7 @@ int readSensorAnalog(const uint8_t pin_analog_in, const uint8_t pin_vcc_out) {
  * This function wraps the work, that is being done inside setup().
  * It allows to exit the control flow if an connection attempt
  * times out and then jump directly to deep sleep.
- * This avoids the use of goto statements.
+ * This avoids the use of goto statements in setup().
  */
 bool doWork() {
 
@@ -235,6 +240,9 @@ bool doWork() {
   if (!wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT)) {
     return false;
   }
+
+  // init mqtt topics:
+  String mqtt_topic_humidity = "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HUMIDITY_ID);
 
   // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
@@ -245,12 +253,12 @@ bool doWork() {
   }
 
   // read sensors:
-  int sensorHumidityValue = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
+  int sensor_humidity_value = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
 
   // send data:
-  char message[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
-  sprintf(message, "%d", sensorHumidityValue);
-  mqttSendMessage("foo", message);
+  char message_humidity[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
+  sprintf(message_humidity, "%d", sensor_humidity_value);
+  mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
   
   return true;
   
