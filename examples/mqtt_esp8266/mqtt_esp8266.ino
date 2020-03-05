@@ -52,15 +52,18 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   }
 
   if (retry_timeout <= 0) {
+
     Serial.println(" Timed out.");
     return false;
-  } else {
-    Serial.println(" Connected.");
-    Serial.print("  Assigned IP is ");
-    Serial.print(WiFi.localIP());
-    Serial.println(".");
-    return true;
+
   }
+  
+  Serial.println(" Connected.");
+  Serial.print("  Assigned IP is ");
+  Serial.print(WiFi.localIP());
+  Serial.println(".");
+  return true;
+  
 }
 
 bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
@@ -103,17 +106,62 @@ bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
     
     return false;
     
-  } else {
-    
-    Serial.println(" Connected.");
-      
-    Serial.print("  Client ID is ");
-    Serial.print(mqttClientId);
-    Serial.println(".");
-
-    return true;
-    
   }
+    
+  Serial.println(" Connected.");
+    
+  Serial.print("  Client ID is ");
+  Serial.print(mqttClientId);
+  Serial.println(".");
+
+  return true;
+  
+}
+
+bool mqttSendMessage(char* topic, char* message) {
+
+  // subscibe to outgoing topic to be able
+  // to check if message was delivered:
+  mqttClient.subscribe(topic);
+
+  // publish message on given topic:
+  Serial.print("Publishing message: '");
+  Serial.print(message);
+  Serial.println("'.");
+  
+  mqttClient.publish(topic, message);
+
+  // wait until message was rebounced:
+  // Note: This library doesn't offer QoS levels that make sure that the message
+  //       was delivered. By waiting for the message to be delivered back to this
+  //       device we can at least make sure that it was delivered to the broker
+  //       but we can't make sure that it was acutally delivered to the datastore.
+  Serial.print("  Waiting for message to be rebounced.");
+  
+  int receive_retry_delay = MQTT_SEND_REBOUNCE_DELAY;
+  int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
+  
+  while (!mqtt_message_is_received && receive_retry_timeout > 0) {
+    Serial.print(".");
+    mqttClient.loop();
+
+    // reset mqtt_message_is_received if wrong message was received:
+    if (mqtt_message_is_received && !strcmp(mqtt_received_message, message) == 0) {
+      mqtt_message_is_received = false;
+    }
+
+    // prepare next loop:
+    receive_retry_timeout -= receive_retry_delay;
+    delay(receive_retry_delay);
+  }
+
+  if (receive_retry_timeout <= 0) {
+    Serial.println(" Timed out.");
+    return false;
+  }
+
+  Serial.println(" Received.");
+  return true;
   
 }
 
@@ -175,52 +223,11 @@ bool doWork() {
     return false;
   }
 
-  // subscibe to outgoing topic to be able
-  // to check if message was delivered:
-  mqttClient.subscribe("foo");
-
-  // receive messages:
-//  mqttClient.loop();
-
   // read sensors:
-
+  // TODO
 
   // send data:
-  char msg[50];
-  int value = 1;
-  snprintf (msg, 50, "hello world #%ld", millis());
-  Serial.print("Publishing message: ");
-  Serial.println(msg);
-  mqttClient.publish("foo", msg);
-
-  // wait until message was rebounced:
-  // (if I received it, the broker has sent it to other clients as well
-  // but we can't make sure that it was acutally delivered to the datastore):
-  Serial.print("  Waiting for message to be rebounced.");
-  
-  int receive_retry_delay = MQTT_SEND_REBOUNCE_DELAY;
-  int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
-  
-  while (!mqtt_message_is_received && receive_retry_timeout > 0) {
-    Serial.print(".");
-    mqttClient.loop();
-
-    // reset mqtt_message_is_received if wrong message was received:
-    if (mqtt_message_is_received && !strcmp(mqtt_received_message, msg) == 0) {
-      mqtt_message_is_received = false;
-    }
-
-    // prepare next loop:
-    receive_retry_timeout -= receive_retry_delay;
-    delay(receive_retry_delay);
-  }
-
-  if (receive_retry_timeout <= 0) {
-    Serial.println(" Timed out.");
-    return false;
-  } else {
-    Serial.println(" Done.");
-  }
+  mqttSendMessage("foo", "This is a message");
   
   return true;
   
@@ -238,7 +245,9 @@ void setup() {
   
   // -- WORK
   
-  doWork();
+  if(!doWork()) {
+    Serial.println("MESSAGE COULD NOT BE SENT!");
+  }
 
   
   // -- SLEEP
