@@ -125,9 +125,9 @@ bool mqttSendMessage(char* topic, char* message) {
   mqttClient.subscribe(topic);
 
   // publish message on given topic:
-  Serial.print("Publishing message: '");
+  Serial.print("Publishing message '");
   Serial.print(message);
-  Serial.println("'.");
+  Serial.print("'.");
   
   mqttClient.publish(topic, message);
 
@@ -136,7 +136,6 @@ bool mqttSendMessage(char* topic, char* message) {
   //       was delivered. By waiting for the message to be delivered back to this
   //       device we can at least make sure that it was delivered to the broker
   //       but we can't make sure that it was acutally delivered to the datastore.
-  Serial.print("  Waiting for message to be rebounced.");
   
   int receive_retry_delay = MQTT_SEND_REBOUNCE_DELAY;
   int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
@@ -160,7 +159,7 @@ bool mqttSendMessage(char* topic, char* message) {
     return false;
   }
 
-  Serial.println(" Received.");
+  Serial.println(" Delivered.");
   return true;
   
 }
