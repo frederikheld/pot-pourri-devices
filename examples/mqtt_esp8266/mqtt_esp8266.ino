@@ -66,7 +66,7 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   
 }
 
-bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
+bool mqttConnect(const int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
   
   int retry_delay = mqtt_connect_retry_delay;
   int retry_timeout = mqtt_connect_retry_timeout;
@@ -118,7 +118,7 @@ bool mqttConnect(int device_id, PubSubClient mqttClient, const char* mqtt_server
   
 }
 
-bool mqttSendMessage(char* topic, char* message) {
+bool mqttSendMessage(const char* topic, const char* message) {
 
   // subscibe to outgoing topic to be able
   // to check if message was delivered:
@@ -164,7 +164,7 @@ bool mqttSendMessage(char* topic, char* message) {
   
 }
 
-void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length) {
+void mqttMessageReceivedCallback(const char* topic, const byte* payload, const unsigned int length) {
 
     // convert byte* payload to char*:
     char* result = (char*) payload;
@@ -179,7 +179,7 @@ void mqttMessageReceivedCallback(char* topic, byte* payload, unsigned int length
     mqtt_received_message = result;
 }
 
-void deepSleepSeconds(int time_in_seconds) {
+void deepSleepSeconds(const int time_in_seconds) {
 
 //    // turn all outputs off:
 //    digitalWrite(HEARTBEAT_PIN, LOW);
@@ -198,6 +198,28 @@ void deepSleepSeconds(int time_in_seconds) {
     // TODO: I could not get that running yet!
 
     // Deep sleep will shut off all pins.
+
+}
+
+int readSensorAnalog(const uint8_t pin_analog_in, const uint8_t pin_vcc_out) {
+  
+    // init sensor:
+    pinMode(pin_vcc_out, OUTPUT);
+    digitalWrite(pin_vcc_out, LOW);
+    pinMode(pin_analog_in, INPUT);
+
+    // turn sensor on:
+    digitalWrite(pin_vcc_out, HIGH);
+    delay(100); // the sensors takes some microseconds until it is ready
+    
+    // measure:
+    int value_raw = analogRead(pin_analog_in);
+
+    // turn sensor off:
+    digitalWrite(pin_vcc_out, LOW);
+
+    // return:
+    return value_raw;
 
 }
 
@@ -223,10 +245,12 @@ bool doWork() {
   }
 
   // read sensors:
-  // TODO
+  int sensorHumidityValue = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
 
   // send data:
-  mqttSendMessage("foo", "This is a message");
+  char message[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
+  sprintf(message, "%d", sensorHumidityValue);
+  mqttSendMessage("foo", message);
   
   return true;
   
