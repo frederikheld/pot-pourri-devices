@@ -186,23 +186,11 @@ void mqttMessageReceivedCallback(const char* topic, const byte* payload, const u
 
 void deepSleepSeconds(const int time_in_seconds) {
 
-//    // turn all outputs off:
-//    digitalWrite(HEARTBEAT_PIN, LOW);
-//    digitalWrite(SENSOR_HUMIDITY_VCC_OUT, LOW);
-
-    // no deep sleep:
-    // delay(time_in_seconds * 1000);
-
-    // with bridge between RST and D0
+    // deep sleep:
     ESP.deepSleep(time_in_seconds * 1000 * 1000); // time in microseconds!
-
-    // without bridge between RST and D0
-    // esp_sleep_enable_timer_wakeup(BLINK_INTERVAL * 1000 * 1000);
-    // esp_deep_sleep_start();
-    // Source: http://educ8s.tv/esp32-deep-sleep-tutorial/
-    // TODO: I could not get that running yet!
-
-    // Deep sleep will shut off all pins.
+    // Note: This requires a bridge between RST and D0 in order to work!
+  
+    // Note: Deep sleep will shut off all pins.
 
 }
 
@@ -266,10 +254,9 @@ bool doWork() {
   
 void setup() {
 
+
   // -- SETUP
   
-//  pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
-
   // start serial:
   Serial.begin(9600);
 
