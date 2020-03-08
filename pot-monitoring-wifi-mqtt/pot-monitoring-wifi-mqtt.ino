@@ -135,7 +135,7 @@ bool mqttSendMessage(const char* topic, const char* message) {
   Serial.print(topic);
   Serial.print("'.");
   
-  mqttClient.publish(topic, message);
+  mqttClient.publish(topic, message, true);
 
   // wait until message was rebounced:
   // Note: This is not an implement of QoS 1 (which this library is lacking)
