@@ -1,7 +1,7 @@
 // -- DEVICE
 
 // device:
-#define DEVICE_ID 0 // has to be unique within the Pot Pourri network!
+#define DEVICE_ID "0" // has to be unique within the Pot Pourri network!
 #define SAMPLING_INTERVAL 10 // in seconds. Note: The time it takes to collect and send the data goes on top!
 
 

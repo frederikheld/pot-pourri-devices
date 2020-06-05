@@ -70,7 +70,7 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   
 }
 
-bool mqttConnect(const int device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
+bool mqttConnect(const char* device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
   
   int retry_delay = mqtt_connect_retry_delay;
   int retry_timeout = mqtt_connect_retry_timeout;
