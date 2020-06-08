@@ -126,22 +126,20 @@ bool mqttSendMessage(const char* topic, const char* message) {
 
   // subscibe to outgoing topic to be able
   // to check if message was delivered:
-  mqttClient.subscribe((String(MQTT_ROOT_TOPIC) + "/" + topic).c_str());
+  mqttClient.subscribe(topic);
 
   // publish message on given topic:
   Serial.print("Publishing message '");
   Serial.print(message);
   Serial.print("' on topic '");
-  Serial.print(String(MQTT_ROOT_TOPIC) + "/" + topic);
+  Serial.print(topic);
   Serial.print("'.");
   
-  mqttClient.publish((String(MQTT_ROOT_TOPIC) + "/" + topic).c_str(), message, true);
+  mqttClient.publish(topic, message, true);
 
   // wait until message was rebounced:
-  // Note: This is not an implement of QoS 1 (which this library is lacking)
-  //       as there will be no attempt to send the message again if it failed.
-  //       This behavior could be added though.
-  //       Right now it just makes sure that the message is fully sent before
+  // Note: This is not an attempt to implement QoS levels.
+  //       It just makes sure that the message is fully sent before
   //       the board enters deep sleep mode. By waiting for the message to be
   //       delivered back to this device we can make sure that it was delivered
   //       to the broker.
@@ -192,7 +190,7 @@ void deepSleepSeconds(const int time_in_seconds) {
 
     // deep sleep:
     ESP.deepSleep(time_in_seconds * 1000 * 1000); // time in microseconds!
-    // Note: This requires a bridge between RST and D0 in order to work!
+    // Note: This requires a bridge between RST and D0 pins in order to work!
   
     // Note: Deep sleep will shut off all pins.
 
