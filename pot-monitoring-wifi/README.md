@@ -12,7 +12,11 @@ Right now this is the only sensor in the setup, but it is possible to add sensor
 
 ## Prerequisites
 
-In order to be able to compile this sketch, you need to install _PubSubClient by Nick O'Leary_ (tested with 1.7.2) via the Library Manager. Reference: https://github.com/knolleary/pubsubclient
+In order to be able to compile this sketch, you need to install the following packages via _Arduino IDE_'s _Package Manager_:
+
+* _ESP8266Wifi_ library as described here: https://stackoverflow.com/a/50951309/10043870
+* _PubSubClient by Nick O'Leary_ (tested with 1.7.2) via the Library Manager. Reference: https://github.com/knolleary/pubsubclient
+* _ArduinoJson_ library via the Library Manager. Reference: https://arduinojson.org/ (note that the sketch will only work if you use version 5!)
 
 ## Config
 
@@ -32,9 +36,13 @@ All other values can stay untouched if you have deployed _Pot Pourri_ with the d
 
 ## Upload the Sketch
 
+Before you upload the sketch, you need to remove the jumper cable that connects the pins "RST" and "D0". It is colored blue in the breadboard diagram above.
+
 If you haven't used NodeMCU boards before, you need to install it via Tools > Board Manager first. The package name is [esp8266 by ESP8266 Community](https://github.com/esp8266/Arduino).
 
 Then select NodeMCU 1.0 (ESP-12E Module) in the Tools menu and upload the sketch to your board.
+
+Don't forget to put the cable between pins "RST" and "D0" back in place. Without it, the NodeMCU can't wake up from Deep Sleep!
 
 ## Usage
 

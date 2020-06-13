@@ -8,18 +8,6 @@ In configured intervals the sensors will create a sample and send it to the conf
 
 ### pot-monitoring-wifi
 
-WiFi-enabled NodeMCU devices are able to communicate directly with the configured API endpoint. They will do it in configured intervals and go to deep-sleep mode in-between to save battery life.
-
-To be able to compile the sketch, first you have to add the _ESP8266Wifi_ library as described here: https://stackoverflow.com/a/50951309/10043870
-
-You also need to install the _ArduinoJson_ library via the Library Manager. Reference: https://arduinojson.org/ (note that the sketch will only work if you use version 5!)
-
-> Attention: Don't forget to select the correct board and remove the jumper cable that connects RST with D0 before you flash the board!
-
-> DEPRECATION WARNING! Communication via the _Pot Pourri's_ own API is going to be deprecated and will be replaced by communication via MQTT!
-
-### pot-monitoring-wifi
-
 _pot-monitoring-wifi_ is the main device in the _Pot Pourri_ ecosystem. It's a _NodeMCU_, that communicates with the _MQTT broker_ via WiFi. It will send sensor values in defined intervals and go into Deep Sleep mode in between.
 
 See [_pot-monitoring-wifi_](./pot-monitoring-wifi/README.md) for more details.
