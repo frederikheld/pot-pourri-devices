@@ -8,30 +8,27 @@ In configured intervals the sensors will create a sample and send it to the conf
 
 ### pot-monitoring-wifi
 
-WiFi-enabled NodeMCU devices are able to communicate directly with the configured API endpoint. They will do it in configured intervals and go to deep-sleep mode in-between to save battery life.
+_pot-monitoring-wifi_ is the main device in the _Pot Pourri_ ecosystem. It's a _NodeMCU_, that communicates with the _MQTT broker_ via WiFi. It will send sensor values in defined intervals and go into Deep Sleep mode in between.
 
-To be able to compile the sketch, first you have to add the _ESP8266Wifi_ library as described here: https://stackoverflow.com/a/50951309/10043870
+See [_pot-monitoring-wifi_](./pot-monitoring-wifi/README.md) for more details.
 
-You also need to install the _ArduinoJson_ library via the Library Manager. Reference: https://arduinojson.org/ (note that the sketch will only work if you use version 5!)
+### pot-watering-wifi
 
-> Attention: Don't forget to select the correct board and remove the jumper cable that connects RST with D0 before you flash the board!
+_pot-watering-wifi_ is a first prototype that puts actors on the NodeMCU device. It is planned to have valves as actors to be able to water the plants automatically. This is still in a very early stage!
 
-> DEPRECATION WARNING! Communication via the _Pot Pourri's_ own API is going to be deprecated and will be replaced by communication via MQTT!
-
-### pot-monitoring-wifi-mqtt
-
-For commuication via MQTT instead of _Pot Pourri's_ own API, won't need to install _ArduinoJson_.
-
-Instead you need to install _PubSubClient by Nick O'Leary_ (tested with 1.7.2) via the Library Manager. Reference: https://github.com/knolleary/pubsubclient
-
+See [_pot-watering-wifi_](./pot-watering-wifi/README.md) for more details.
 
 ### pot-monitoring-serial
 
-`pot-monitoring-serial` is made for Arduino Uno devices without network connectivity. Therefore it comes with a service that provides connectivity to the _Datastore_ of _pot-pourri_. You have to run the service on a machine with network access and a serial connection to the device.
+_pot-monitoring-serial_ is made for _Arduino Uno_ devices without network connectivity. Instead you connect the Arduino via USB serial to a computer that is connected to the WiFi. The package comes with a service that translates serial messages to MQTT messages and sends them to the broker.
+
+> Note: this is being refactored at the moment. The docs describe how it is going to be. Right now, the service sends the data to _datastore_.
 
 To start the service run `npm start` in _./pot-monitoring-serial_.
 
 > DEPRECATION WARNING! Communication via the _Pot Pourri's_ own API is going to be deprecated and will be replaced by communication via MQTT! This is not implemented for _pot-monitoring-serial_ yet.
+
+See [_pot-monitoring-serial_](./pot-monitoring-serial/README.md) for more details.
 
 ## Useful links
 
