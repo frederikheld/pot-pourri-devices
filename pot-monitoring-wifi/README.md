@@ -50,7 +50,7 @@ As you power up the device, it will automatically connect to your wifi, collect 
 
 ## Troubleshooting
 
-If you connect the device to your computer via USB, you can use the _Serial Monitor_ in the _Arduino IDE_ to check the debug output.
+You can connect the device to your computer via USB and can use the _Serial Monitor_ in the _Arduino IDE_ in order to see the debug output.
 
 Other options for troubleshooting are:
 
