@@ -4,7 +4,7 @@ This is the standard device for your _Pot Pourri_ setup. It's a _NodeMCU_ with s
 
 ## Hardware
 
-![Breadboard schema of the Pot Monitoring WiFi device](./environment-monitoring-wifi_bb.png)
+![Breadboard schema of the Environment Monitoring WiFi device](./environment-monitoring-wifi_bb.png)
 
 The DHT22 air temperature and humidity sensor is connected via OneWire bus. We are using Adafruit's [DHT sensor library](https://github.com/adafruit/DHT-sensor-library) to read temperature in °C and air humidity in % from the bus.
 
