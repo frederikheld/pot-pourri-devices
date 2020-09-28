@@ -1,4 +1,4 @@
-# Pot Monitoring WiFi device
+# Environment Monitoring WiFi device
 
 This is the standard device for your _Pot Pourri_ setup. It's a _NodeMCU_ with sensors that can communicate via WiFi. It publishes sensor readings in defined intervals to a _MQTT_ topic.
 
