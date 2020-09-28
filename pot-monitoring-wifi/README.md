@@ -6,7 +6,7 @@ This is the standard device for your _Pot Pourri_ setup. It's a _NodeMCU_ with s
 
 ![Breadboard schema of the Pot Monitoring WiFi device](./pot-monitoring-wifi_bb.png)
 
-The humidity sensor is connected via an analog/digital converter module that outputs values [0..1024], while 0 is "absolutely wet" and 1024 is "absolutely dry".
+The soil moisture sensor is connected via an analog/digital converter module that outputs values [0..1024], while 0 is "absolutely wet" and 1024 is "absolutely dry".
 
 Right now this is the only sensor in the setup, but it is possible to add sensors for other kinds of environment data via the same module.
 
