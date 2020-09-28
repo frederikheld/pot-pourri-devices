@@ -5,6 +5,8 @@
  *  - install libraries as explained in README.md
  *  - select the correct board
  *  - upload the sketch
+ * 
+ * Note: this is engineering - we use SI units here!
  */
 
 // -- import config
@@ -16,6 +18,7 @@
 
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include "DHT.h"
 
 
 // -- define global objects
@@ -26,11 +29,20 @@ WiFiClient wifiClient;
 // mqtt client:
 PubSubClient mqttClient(wifiClient);
 
+// DHT sensor:
+DHT dht(SENSOR_DHT22_ONEWIRE_IN, DHT22);
+
 
 // -- define global variables:
 
 bool mqtt_message_is_received = false;
 char* mqtt_received_message;
+
+struct dht_response {
+  float temperature_celsius;
+  float humidity_percent;
+  float heat_index_celsius;
+};
 
 
 // -- functions
@@ -161,6 +173,8 @@ bool mqttSendMessage(const char* topic, const char* message) {
     delay(receive_retry_delay);
   }
 
+  mqtt_message_is_received = false; // reset for next transmission
+
   if (receive_retry_timeout <= 0) {
     Serial.println(" Timed out.");
     return false;
@@ -218,6 +232,20 @@ int readSensorAnalog(const uint8_t pin_analog_in, const uint8_t pin_vcc_out) {
 
 }
 
+dht_response readSensorDHTOneWire(const uint8_t pin_onewire_in, const  uint8_t pin_vcc_out) {
+
+    float humidity_percent = dht.readHumidity();
+    float temperature_celsius = dht.readTemperature();
+    float heat_index_celsius = dht.computeHeatIndex(temperature_celsius, humidity_percent, false);
+
+    dht_response response = {
+      temperature_celsius, humidity_percent, heat_index_celsius
+    };
+
+    return response;
+
+}
+
 /**
  * This function wraps the work, that is being done inside setup().
  * It allows to exit the control flow if an connection attempt
@@ -226,6 +254,24 @@ int readSensorAnalog(const uint8_t pin_analog_in, const uint8_t pin_vcc_out) {
  */
 bool doWork() {
 
+  // read sensors:
+  dht_response dht_response = readSensorDHTOneWire(SENSOR_DHT22_ONEWIRE_IN, SENSOR_DHT22_VCC_OUT);
+  float temperature_celsius = dht_response.temperature_celsius;
+  float humidity_percent = dht_response.humidity_percent;
+  float heatindex_celsius = dht_response.heat_index_celsius;
+
+  // DEBUG:
+  Serial.println("Sensor readings:");
+  Serial.print("  - temperature: ");
+  Serial.print(temperature_celsius);
+  Serial.println(" °C");
+  Serial.print("  - humidity: ");
+  Serial.print(humidity_percent);
+  Serial.println(" %");
+  Serial.print("  - heat index: ");
+  Serial.print(heatindex_celsius);
+  Serial.println(" °C");
+
   // connect to wifi:
   if (!wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT)) {
     return false;
@@ -233,6 +279,8 @@ bool doWork() {
 
   // init mqtt topics:
   String mqtt_topic_humidity = String(MQTT_ROOT_TOPIC) + "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HUMIDITY_ID);
+  String mqtt_topic_temperature = String(MQTT_ROOT_TOPIC) + "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_TEMPERATURE_ID);
+  String mqtt_topic_heatindex = String(MQTT_ROOT_TOPIC) + "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HEATINDEX_ID);
 
   // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
@@ -241,15 +289,26 @@ bool doWork() {
   if(!mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY, MQTT_CONNECT_RETRY_TIMEOUT)) {
     return false;
   }
-
-  // read sensors:
-  int sensor_humidity_value = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
-
-  // send data:
-  char message_humidity[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
-  sprintf(message_humidity, "%d", sensor_humidity_value);
-  mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
   
+  // send data:
+  char message_humidity[6]; // a sensor value is between 0.00 and 100.00, so it has a max length of 6
+  sprintf(message_humidity, "%3.2f", humidity_percent);
+  mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
+
+  // delay(1000);
+
+  char message_temperature[6]; // a sensor value is between -40.00 and 80.00, so it has a max length of 6
+  sprintf(message_temperature, "%3.2f", temperature_celsius);
+  mqttSendMessage(mqtt_topic_temperature.c_str(), message_temperature);
+
+  // delay(1000);
+
+  char message_heatindex[6]; // heat index might theoretically be as high as 709.00 °C (at 80.00 °C and 100.00 % humidity, which is highly unlikely). So it has a max length of 6
+  sprintf(message_heatindex, "%3.2f", heatindex_celsius);
+  mqttSendMessage(mqtt_topic_heatindex.c_str(), message_heatindex);
+  
+  // delay(1000);
+
   return true;
   
 }
@@ -261,6 +320,9 @@ void setup() {
   
   // start serial:
   Serial.begin(9600);
+
+  // start dht sensor onewire:
+  dht.begin();
 
   
   // -- WORK

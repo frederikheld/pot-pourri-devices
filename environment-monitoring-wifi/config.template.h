@@ -24,7 +24,9 @@
 
 // -- SENSORS
 
-// humidity sensor:
-#define SENSOR_HUMIDITY_ID "humidity" // has to be unique per device. Can be a string or an integer.
-#define SENSOR_HUMIDITY_VCC_OUT D5
-#define SENSOR_HUMIDITY_ONEWIRE_IN D6
+// air humidity and temperature sensor:
+#define SENSOR_DHT22_VCC_OUT D5
+#define SENSOR_DHT22_ONEWIRE_IN D6
+#define SENSOR_HUMIDITY_ID "humidity" // ID used to publish readings. Has to be unique per device. Can be a string or an integer.
+#define SENSOR_TEMPERATURE_ID "temperature" // ID used to publish readings. Has to be unique per device. Can be a string or an integer.
+#define SENSOR_HEATINDEX_ID "heatindex" // ID used to publish readings. Has to be unique per device. Can be a string or an integer.
