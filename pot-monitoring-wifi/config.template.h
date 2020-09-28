@@ -24,7 +24,7 @@
 
 // -- SENSORS
 
-// humidity sensor:
-#define SENSOR_HUMIDITY_ID "humidity" // has to be unique per device. Can be a string or an integer.
-#define SENSOR_HUMIDITY_VCC_OUT D5
-#define SENSOR_HUMIDITY_ANALOG_IN A0
+// moisture sensor:
+#define SENSOR_MOISTURE_ID "moisture" // has to be unique per device. Can be a string or an integer.
+#define SENSOR_MOISTURE_VCC_OUT D5
+#define SENSOR_MOISTURE_ANALOG_IN A0

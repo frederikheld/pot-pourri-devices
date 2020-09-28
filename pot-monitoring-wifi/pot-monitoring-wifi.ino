@@ -232,7 +232,7 @@ bool doWork() {
   }
 
   // init mqtt topics:
-  String mqtt_topic_humidity = String(MQTT_ROOT_TOPIC) + "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_HUMIDITY_ID);
+  String mqtt_topic_moisture = String(MQTT_ROOT_TOPIC) + "/devices/" + String(DEVICE_ID) + "/sensors/" + String(SENSOR_MOISTURE_ID);
 
   // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
@@ -243,12 +243,12 @@ bool doWork() {
   }
 
   // read sensors:
-  int sensor_humidity_value = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
+  int sensor_moisture_value = readSensorAnalog(SENSOR_MOISTURE_ANALOG_IN, SENSOR_MOISTURE_VCC_OUT);
 
   // send data:
-  char message_humidity[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
-  sprintf(message_humidity, "%d", sensor_humidity_value);
-  mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
+  char message_moisture[4]; // a sensor value is between 0 and 1024, so it has a maximum length of 4
+  sprintf(message_moisture, "%d", sensor_moisture_value);
+  mqttSendMessage(mqtt_topic_moisture.c_str(), message_moisture);
   
   return true;
   
