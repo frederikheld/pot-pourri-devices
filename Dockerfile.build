@@ -1,0 +1,26 @@
+# This is a generic container that builds arduino sketches
+# The individual dependencies need to be passed as a 
+
+FROM ubuntu:20.04
+# 20.04 is an LTS version. Always use LTS versions!
+
+WORKDIR /usr/src/app
+
+# install dependencies:
+RUN apt update && \
+    apt install curl -y
+
+# install arduino-cli:
+RUN curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+ENV PATH="/usr/src/app/bin:${PATH}"
+
+# prepare arduino-cli:
+RUN arduino-cli core update-index
+
+
+# create mount points:
+VOLUME ["src", "dist"]
+# src: mount sketch source directory my-sketch/my-sketch.ino here
+# dist: mount directory for build result here
+
+CMD ["arduino-cli", "compile"]
