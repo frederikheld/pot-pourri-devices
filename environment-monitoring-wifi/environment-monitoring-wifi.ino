@@ -29,8 +29,8 @@ WiFiClient wifiClient;
 // mqtt client:
 PubSubClient mqttClient(wifiClient);
 
-// DHT sensor:
-DHT dht(SENSOR_DHT22_ONEWIRE_IN, DHT22);
+// // init sensor:
+// DHT dht(SENSOR_DHT22_ONEWIRE_IN, DHT22);
 
 
 // -- define global variables:
@@ -53,14 +53,14 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   int retry_timeout = wifi_connect_retry_timeout;
   
   Serial.println();
-  Serial.print("Attempting to connect to WiFi ");
+  Serial.print(F("Attempting to connect to WiFi "));
   Serial.print(ssid);
-  Serial.print(".");
+  Serial.print(F("."));
 
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED && retry_timeout > 0) {
-    Serial.print(".");
+    Serial.print(F("."));
 
     // prepare next loop:
     retry_timeout -= retry_delay;
@@ -69,15 +69,15 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
 
   if (retry_timeout <= 0) {
 
-    Serial.println(" Timed out.");
+    Serial.println(F(" Timed out."));
     return false;
 
   }
   
-  Serial.println(" Connected.");
-  Serial.print("  Assigned IP is ");
+  Serial.println(F(" Connected."));
+  Serial.print(F("  Assigned IP is "));
   Serial.print(WiFi.localIP());
-  Serial.println(".");
+  Serial.println(F("."));
   return true;
   
 }
@@ -141,11 +141,11 @@ bool mqttSendMessage(const char* topic, const char* message) {
   mqttClient.subscribe(topic);
 
   // publish message on given topic:
-  Serial.print("Publishing message '");
+  Serial.print(F("Publishing message '"));
   Serial.print(message);
-  Serial.print("' on topic '");
+  Serial.print(F("' on topic '"));
   Serial.print(topic);
-  Serial.print("'.");
+  Serial.print(F("'."));
   
   mqttClient.publish(topic, message, true);
 
@@ -160,7 +160,7 @@ bool mqttSendMessage(const char* topic, const char* message) {
   int receive_retry_timeout = MQTT_SEND_REBOUNCE_TIMEOUT;
   
   while (!mqtt_message_is_received && receive_retry_timeout > 0) {
-    Serial.print(".");
+    Serial.print(F("."));
     mqttClient.loop();
 
     // reset mqtt_message_is_received if wrong message was received:
@@ -176,11 +176,11 @@ bool mqttSendMessage(const char* topic, const char* message) {
   mqtt_message_is_received = false; // reset for next transmission
 
   if (receive_retry_timeout <= 0) {
-    Serial.println(" Timed out.");
+    Serial.println(F(" Timed out."));
     return false;
   }
 
-  Serial.println(" Delivered.");
+  Serial.println(F(" Delivered."));
   return true;
   
 }
@@ -232,16 +232,30 @@ int readSensorAnalog(const uint8_t pin_analog_in, const uint8_t pin_vcc_out) {
 
 }
 
-dht_response readSensorDHTOneWire(const uint8_t pin_onewire_in, const  uint8_t pin_vcc_out) {
+dht_response readSensorDHTOneWire(const uint8_t pin_onewire_in, const uint8_t pin_vcc_out, const uint8_t dht_type = DHT22) {
 
+    // init sensor:
+    pinMode(pin_vcc_out, OUTPUT);
+    digitalWrite(pin_vcc_out, LOW);
+    DHT dht(pin_onewire_in, dht_type);
+
+    // turn sensor on:
+    digitalWrite(pin_vcc_out, HIGH);
+    delay(5000); // the sensors takes about 2 seconds until it is ready. We give it two cycles to adjust.
+    dht.begin();
+
+    // measure:
     float humidity_percent = dht.readHumidity();
     float temperature_celsius = dht.readTemperature();
     float heat_index_celsius = dht.computeHeatIndex(temperature_celsius, humidity_percent, false);
 
+    // turn sensor off:
+    digitalWrite(pin_vcc_out, LOW);
+
+    // return:
     dht_response response = {
       temperature_celsius, humidity_percent, heat_index_celsius
     };
-
     return response;
 
 }
@@ -259,18 +273,6 @@ bool doWork() {
   float temperature_celsius = dht_response.temperature_celsius;
   float humidity_percent = dht_response.humidity_percent;
   float heatindex_celsius = dht_response.heat_index_celsius;
-
-  // DEBUG:
-  Serial.println("Sensor readings:");
-  Serial.print("  - temperature: ");
-  Serial.print(temperature_celsius);
-  Serial.println(" °C");
-  Serial.print("  - humidity: ");
-  Serial.print(humidity_percent);
-  Serial.println(" %");
-  Serial.print("  - heat index: ");
-  Serial.print(heatindex_celsius);
-  Serial.println(" °C");
 
   // connect to wifi:
   if (!wifiConnect(WIFI_SSID, WIFI_SECRET, WIFI_CONNECT_RETRY_DELAY, WIFI_CONNECT_RETRY_TIMEOUT)) {
@@ -295,20 +297,14 @@ bool doWork() {
   sprintf(message_humidity, "%3.2f", humidity_percent);
   mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
 
-  // delay(1000);
-
   char message_temperature[6]; // a sensor value is between -40.00 and 80.00, so it has a max length of 6
   sprintf(message_temperature, "%3.2f", temperature_celsius);
   mqttSendMessage(mqtt_topic_temperature.c_str(), message_temperature);
-
-  // delay(1000);
 
   char message_heatindex[6]; // heat index might theoretically be as high as 709.00 °C (at 80.00 °C and 100.00 % humidity, which is highly unlikely). So it has a max length of 6
   sprintf(message_heatindex, "%3.2f", heatindex_celsius);
   mqttSendMessage(mqtt_topic_heatindex.c_str(), message_heatindex);
   
-  // delay(1000);
-
   return true;
   
 }
@@ -321,25 +317,21 @@ void setup() {
   // start serial:
   Serial.begin(9600);
 
-  // start dht sensor onewire:
-  dht.begin();
-
   
   // -- WORK
   
   if(!doWork()) {
-    Serial.println("MESSAGE COULD NOT BE SENT!");
+    Serial.println(F("MESSAGE COULD NOT BE SENT!"));
   }
 
   
   // -- SLEEP
 
   // init deep sleep:
-  Serial.print("Going to deep sleep for ");
+  Serial.print(F("Going to deep sleep for "));
   Serial.print(SAMPLING_INTERVAL);
-  Serial.println(" seconds.");
+  Serial.println(F(" seconds."));
   deepSleepSeconds(SAMPLING_INTERVAL);
-
 
 }
 
