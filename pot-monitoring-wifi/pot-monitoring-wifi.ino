@@ -45,6 +45,7 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   Serial.print(ssid);
   Serial.print(".");
 
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED && retry_timeout > 0) {
@@ -70,7 +71,7 @@ bool wifiConnect(const char* ssid, const char* password, const int wifi_connect_
   
 }
 
-bool mqttConnect(const char* device_id, PubSubClient mqttClient, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
+bool mqttConnect(const char* device_id, const char* mqtt_server, const int mqtt_port, const int mqtt_connect_retry_delay = 500, const int mqtt_connect_retry_timeout = 10000) {
   
   int retry_delay = mqtt_connect_retry_delay;
   int retry_timeout = mqtt_connect_retry_timeout;
@@ -117,6 +118,9 @@ bool mqttConnect(const char* device_id, PubSubClient mqttClient, const char* mqt
   Serial.print("  Client ID is ");
   Serial.print(mqttClientId);
   Serial.println(".");
+  Serial.print("  Client state is ");
+  Serial.print(mqttClient.state());
+  Serial.println(".");
 
   return true;
   
@@ -135,7 +139,7 @@ bool mqttSendMessage(const char* topic, const char* message) {
   Serial.print(topic);
   Serial.print("'.");
   
-  mqttClient.publish(topic, message, true);
+  mqttClient.publish(topic, message);
 
   // wait until message was rebounced:
   // Note: This is not an attempt to implement QoS levels.
@@ -236,11 +240,17 @@ bool doWork() {
 
   // connect to mqtt broker:
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+  // mqttClient.setKeepAlive(30); // defaults to 15
+  // mqttClient.setSocketTimeout(30); // defaults to 15
   mqttClient.setCallback(mqttMessageReceivedCallback);
 
-  if(!mqttConnect(DEVICE_ID, mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY, MQTT_CONNECT_RETRY_TIMEOUT)) {
+  if(!mqttConnect(DEVICE_ID, MQTT_SERVER, MQTT_PORT, MQTT_CONNECT_RETRY_DELAY, MQTT_CONNECT_RETRY_TIMEOUT)) {
     return false;
   }
+
+  // Note: Sensors are being read after the connection was
+  // established to avoid unnecessary wear on the anodes
+  // in case that the connection fails.
 
   // read sensors:
   int sensor_humidity_value = readSensorAnalog(SENSOR_HUMIDITY_ANALOG_IN, SENSOR_HUMIDITY_VCC_OUT);
@@ -251,7 +261,6 @@ bool doWork() {
   mqttSendMessage(mqtt_topic_humidity.c_str(), message_humidity);
   
   return true;
-  
 }
   
 void setup() {

@@ -14,8 +14,8 @@ Right now this is the only sensor in the setup, but it is possible to add sensor
 
 In order to be able to compile this sketch, you need to install the following packages via _Arduino IDE_'s _Package Manager_:
 
-* _ESP8266Wifi_ library as described here: https://stackoverflow.com/a/50951309/10043870
-* _PubSubClient by Nick O'Leary_ (tested with 1.7.2) via the Library Manager. Reference: https://github.com/knolleary/pubsubclient
+* _ESP8266Wifi_ library as described here: https://stackoverflow.com/a/50951309/10043870 --> it looks like this library is included in the Arduino IDE installation now and therefore doesn't need to be installed separately anymore
+* _PubSubClient by Nick O'Leary_ (tested with 2.8.0) via the Library Manager. Reference: https://github.com/knolleary/pubsubclient
 * _ArduinoJson_ library via the Library Manager. Reference: https://arduinojson.org/ (note that the sketch will only work if you use version 5!)
 
 ## Config
